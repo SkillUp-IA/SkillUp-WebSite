@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "username": "lorenzo",
+    "password": "$2b$10$m63z/c1xX.5j3nRD.1Yc9.6.5Z5YR3ui8STs7G5V5IuDVfTl6SZvC",
+    "createdAt": "2025-11-11T00:14:56.016Z"
+  },
+  {
+    "id": 2,
+    "username": "nono",
+    "password": "$2b$10$wp5Vqx96GQgfGewBX1z39.bpiWT70sWtOzMibhchpB6mvKxAnFkNK",
+    "createdAt": "2025-11-11T00:25:28.500Z"
+  },
+  {
+    "id": 3,
+    "username": "diogo bacana",
+    "password": "$2b$10$YfCTmgwEqhbkdHoECTTEdukrLaZnf3I6q6kn4rg6BadrV22ofRK5S",
+    "createdAt": "2025-11-11T00:46:00.375Z"
+  },
+  {
+    "id": 4,
+    "username": "bacana",
+    "password": "$2b$10$ZVinYYoCEn.p4fTtixfG9eekh1MeIegHpSGiFOtVsBm1LRjWmZ0e6",
+    "createdAt": "2025-11-11T00:46:21.389Z"
+  }
+]
