@@ -13,11 +13,43 @@ import {
   uploadPhoto,
 } from '../lib/api.js'
 
+/* ====== Constantes ====== */
+const ESTADOS_BRASIL = [
+  { sigla: 'AC', nome: 'Acre' },
+  { sigla: 'AL', nome: 'Alagoas' },
+  { sigla: 'AP', nome: 'Amapá' },
+  { sigla: 'AM', nome: 'Amazonas' },
+  { sigla: 'BA', nome: 'Bahia' },
+  { sigla: 'CE', nome: 'Ceará' },
+  { sigla: 'DF', nome: 'Distrito Federal' },
+  { sigla: 'ES', nome: 'Espírito Santo' },
+  { sigla: 'GO', nome: 'Goiás' },
+  { sigla: 'MA', nome: 'Maranhão' },
+  { sigla: 'MT', nome: 'Mato Grosso' },
+  { sigla: 'MS', nome: 'Mato Grosso do Sul' },
+  { sigla: 'MG', nome: 'Minas Gerais' },
+  { sigla: 'PA', nome: 'Pará' },
+  { sigla: 'PB', nome: 'Paraíba' },
+  { sigla: 'PR', nome: 'Paraná' },
+  { sigla: 'PE', nome: 'Pernambuco' },
+  { sigla: 'PI', nome: 'Piauí' },
+  { sigla: 'RJ', nome: 'Rio de Janeiro' },
+  { sigla: 'RN', nome: 'Rio Grande do Norte' },
+  { sigla: 'RS', nome: 'Rio Grande do Sul' },
+  { sigla: 'RO', nome: 'Rondônia' },
+  { sigla: 'RR', nome: 'Roraima' },
+  { sigla: 'SC', nome: 'Santa Catarina' },
+  { sigla: 'SP', nome: 'São Paulo' },
+  { sigla: 'SE', nome: 'Sergipe' },
+  { sigla: 'TO', nome: 'Tocantins' },
+]
+
 /* ====== Helpers ====== */
 function Tags({ label, items, setItems, placeholder = 'Digite e tecle Enter' }) {
   const [v, setV] = useState('')
   function onKeyDown(e) {
     if (e.key === 'Enter' && v.trim()) {
+      e.preventDefault()
       const value = v.trim()
       if (!items.includes(value)) setItems([...items, value])
       setV('')
@@ -128,8 +160,12 @@ export default function RegisterPage() {
   const [foto, setFoto] = useState('https://i.pravatar.cc/150')
   const [cargo, setCargo] = useState('')
   const [resumo, setResumo] = useState('')
-  const [localizacao, setLocalizacao] = useState('')
-  const [area, setArea] = useState('Desenvolvimento')
+
+  // Localização e área
+  const [localizacao, setLocalizacao] = useState('') // continua indo pro backend
+  const [estado, setEstado] = useState('')
+  const [cidade, setCidade] = useState('')
+  const [area, setArea] = useState('')
 
   const [habilidadesTecnicas, setHabilidadesTecnicas] = useState([])
   const [softSkills, setSoftSkills] = useState([])
@@ -237,12 +273,15 @@ export default function RegisterPage() {
     if (!username || !password) return alert('Informe usuário e senha')
     if (!nome || !cargo) return alert('Informe nome e cargo')
 
+    const locFinal =
+      cidade && estado ? `${cidade} - ${estado}` : localizacao || cidade || estado
+
     const profile = {
       nome,
       foto,
       cargo,
       resumo,
-      localizacao,
+      localizacao: locFinal,
       area,
       habilidadesTecnicas,
       softSkills,
@@ -272,8 +311,6 @@ export default function RegisterPage() {
       setSubmitting(false)
     }
   }
-
-  const areasOpts = ['Desenvolvimento', 'Dados', 'Design', 'Infraestrutura', 'Sistemas']
 
   const preview = {
     id: 0,
@@ -333,7 +370,6 @@ export default function RegisterPage() {
 
           <div className="lg:ml-[560px] grid lg:grid-cols-1 gap-6">
             {/* Painel rolável com formulário + preview  */}
-            {/* light-form => força fundos brancos independentemente do tema */}
             <div className="light-form ui-card space-y-6">
 
               {/* Formulário */}
@@ -346,6 +382,8 @@ export default function RegisterPage() {
                     <div>
                       <label className="text-sm text-zinc-500">Usuário *</label>
                       <input
+                        required
+                        minLength={3}
                         value={username}
                         onChange={e => setUsername(e.target.value)}
                         placeholder="Usuário"
@@ -355,6 +393,8 @@ export default function RegisterPage() {
                     <div>
                       <label className="text-sm text-zinc-500">Senha *</label>
                       <input
+                        required
+                        minLength={4}
                         type="password"
                         value={password}
                         onChange={e => setPassword(e.target.value)}
@@ -365,6 +405,8 @@ export default function RegisterPage() {
                     <div className="sm:col-span-2">
                       <label className="text-sm text-zinc-500">Confirmar *</label>
                       <input
+                        required
+                        minLength={4}
                         type="password"
                         value={confirm}
                         onChange={e => setConfirm(e.target.value)}
@@ -385,6 +427,7 @@ export default function RegisterPage() {
                     <div className="sm:col-span-2">
                       <label className="text-sm text-zinc-500">Nome (card) *</label>
                       <input
+                        required
                         value={nome}
                         onChange={e => setNome(e.target.value)}
                         placeholder="Seu nome completo"
@@ -394,31 +437,60 @@ export default function RegisterPage() {
                     <div>
                       <label className="text-sm text-zinc-500">Cargo *</label>
                       <input
+                        required
                         value={cargo}
                         onChange={e => setCargo(e.target.value)}
                         placeholder="Ex.: Eng. de Software"
                         className="ui-input"
                       />
                     </div>
+
                     <div>
-                      <label className="text-sm text-zinc-500">Localização</label>
+                      <label className="text-sm text-zinc-500">Cidade</label>
                       <input
-                        value={localizacao}
-                        onChange={e => setLocalizacao(e.target.value)}
-                        placeholder="Cidade - UF"
+                        value={cidade}
+                        onChange={e => {
+                          const value = e.target.value
+                          setCidade(value)
+                          const loc = estado ? `${value} - ${estado}` : value
+                          setLocalizacao(loc)
+                        }}
+                        placeholder="Ex.: São Paulo"
                         className="ui-input"
                       />
                     </div>
-                    <div className="sm:col-span-2">
-                      <label className="text-sm text-zinc-500">Área</label>
+
+                    <div>
+                      <label className="text-sm text-zinc-500">Estado</label>
                       <select
-                        value={area}
-                        onChange={e => setArea(e.target.value)}
+                        value={estado}
+                        onChange={e => {
+                          const uf = e.target.value
+                          setEstado(uf)
+                          const loc = cidade ? `${cidade} - ${uf}` : uf
+                          setLocalizacao(loc)
+                        }}
                         className="ui-input"
                       >
-                        {areasOpts.map(a => (<option key={a}>{a}</option>))}
+                        <option value="">Selecione</option>
+                        {ESTADOS_BRASIL.map(uf => (
+                          <option key={uf.sigla} value={uf.sigla}>
+                            {uf.sigla} - {uf.nome}
+                          </option>
+                        ))}
                       </select>
                     </div>
+
+                    <div className="sm:col-span-2">
+                      <label className="text-sm text-zinc-500">Área</label>
+                      <input
+                        value={area}
+                        onChange={e => setArea(e.target.value)}
+                        placeholder="Ex.: Desenvolvimento, Dados, Design…"
+                        className="ui-input"
+                      />
+                    </div>
+
                     <div className="sm:col-span-2">
                       <label className="text-sm text-zinc-500">Sobre mim / Resumo</label>
                       <textarea
@@ -432,7 +504,7 @@ export default function RegisterPage() {
                   </div>
 
                   {/* Foto */}
-                  <div className="grid sm:grid-cols-2 gap-3">
+                  <div className="grid sm:grid-cols-2 gap-3 mt-4">
                     <div className="space-y-2">
                       <label className="text-sm text-zinc-500">URL da foto</label>
                       <input
@@ -452,7 +524,7 @@ export default function RegisterPage() {
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm text-zinc-500">Galeria</label>
-                      <div className="grid grid-cols-6 gap-2">
+                      <div className="grid grid-cols-6 gap-2 max-h-32 overflow-y-auto pr-1">
                         {gallery.map((g, i) => (
                           <button
                             key={i}

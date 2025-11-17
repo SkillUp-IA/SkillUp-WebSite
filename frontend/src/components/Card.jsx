@@ -1,14 +1,32 @@
 // src/components/Card.jsx
 export default function Card({ profile, onOpen }) {
   const {
-    nome,
-    cargo,
+    nome = "Nome não informado",
+    cargo = "Cargo não informado",
     localizacao,
     area,
     resumo,
     habilidadesTecnicas = [],
     foto,
-  } = profile
+  } = profile || {};
+
+  // Monta a linha de localização/área de forma segura
+  const locationParts = [];
+  if (localizacao) locationParts.push(localizacao);
+  if (area) locationParts.push(area);
+  const locationLine =
+    locationParts.join(" • ") || "Localização e área não informadas";
+
+  // Avatar: se não tiver foto válida, mostra iniciais
+  const hasFoto = !!foto;
+  const initials =
+    nome &&
+    nome
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase())
+      .join("");
 
   return (
     <button
@@ -16,51 +34,72 @@ export default function Card({ profile, onOpen }) {
       onClick={() => onOpen?.(profile)}
       className="
         group text-left w-full
-        rounded-2xl border border-zinc-200/80 dark:border-zinc-800
-        bg-white dark:bg-zinc-900/90
+        rounded-2xl border border-slate-200/80 dark:border-slate-800
+        bg-white/95 dark:bg-slate-900/90
         p-4 sm:p-5
 
         transform-gpu will-change-transform
-        transition-transform duration-200 ease-out
-        hover:scale-110 hover:-translate-y-0.5 hover:z-10
-        active:scale-[1.01]
+        transition-all duration-200 ease-out
+        hover:-translate-y-1 hover:scale-[1.02] hover:border-sky-300/90 dark:hover:border-sky-500/70
+        hover:shadow-xl hover:shadow-sky-900/20
+        active:scale-[0.99]
 
-        hover:shadow-xl hover:border-zinc-300/90 dark:hover:border-zinc-600
-        focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
+        focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950
       "
     >
       <div className="flex items-center gap-4">
-        <img
-          src={foto}
-          alt={nome}
-          className="h-14 w-14 rounded-full object-cover ring-1 ring-zinc-200 dark:ring-zinc-700"
-        />
-        <div>
-          <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
+        {hasFoto ? (
+          <img
+            src={foto}
+            alt={nome}
+            className="h-14 w-14 rounded-full object-cover ring-2 ring-slate-200 dark:ring-slate-700 group-hover:ring-sky-400/80 transition-colors"
+          />
+        ) : (
+          <div
+            className="
+              h-14 w-14 rounded-full
+              bg-gradient-to-br from-sky-500 to-indigo-600
+              flex items-center justify-center
+              text-sm font-semibold text-white
+              ring-2 ring-slate-200 dark:ring-slate-700
+            "
+          >
+            {initials || "SU"}
+          </div>
+        )}
+
+        <div className="min-w-0">
+          <h3 className="font-semibold text-slate-900 dark:text-slate-50 truncate">
             {nome}
           </h3>
-          <p className="text-sm text-zinc-600 dark:text-zinc-300">{cargo}</p>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            {localizacao} • {area}
+          <p className="text-sm text-slate-600 dark:text-slate-300 truncate">
+            {cargo}
+          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+            {locationLine}
           </p>
         </div>
       </div>
 
       {!!resumo && (
-        <p className="mt-3 text-sm text-zinc-700 dark:text-zinc-200 line-clamp-2">
+        <p className="mt-3 text-sm text-slate-700 dark:text-slate-200 line-clamp-2">
           {resumo}
         </p>
       )}
 
       {!!habilidadesTecnicas.length && (
         <div className="mt-3 flex flex-wrap gap-2">
-          {habilidadesTecnicas.slice(0, 3).map((t, i) => (
+          {habilidadesTecnicas.slice(0, 4).map((t, i) => (
             <span
               key={`${t}-${i}`}
               className="
-                px-2 py-1 text-xs rounded-full
-                bg-zinc-100 text-zinc-700
-                dark:bg-zinc-800 dark:text-zinc-200
+                px-2 py-1 text-[11px] rounded-full
+                bg-slate-100 text-slate-700
+                dark:bg-slate-800 dark:text-slate-100
+                border border-slate-200/70 dark:border-slate-700/70
+                group-hover:bg-sky-50 group-hover:border-sky-300
+                dark:group-hover:bg-sky-900/30 dark:group-hover:border-sky-600
+                transition-colors
               "
             >
               {t}
@@ -69,5 +108,5 @@ export default function Card({ profile, onOpen }) {
         </div>
       )}
     </button>
-  )
+  );
 }

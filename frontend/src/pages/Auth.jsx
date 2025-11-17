@@ -5,11 +5,43 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { createProfile } from "../lib/api.js";
 import Brand from "../components/Brand.jsx";
 
+/* ========== Constantes ========== */
+const ESTADOS_BRASIL = [
+  { sigla: "AC", nome: "Acre" },
+  { sigla: "AL", nome: "Alagoas" },
+  { sigla: "AP", nome: "Amapá" },
+  { sigla: "AM", nome: "Amazonas" },
+  { sigla: "BA", nome: "Bahia" },
+  { sigla: "CE", nome: "Ceará" },
+  { sigla: "DF", nome: "Distrito Federal" },
+  { sigla: "ES", nome: "Espírito Santo" },
+  { sigla: "GO", nome: "Goiás" },
+  { sigla: "MA", nome: "Maranhão" },
+  { sigla: "MT", nome: "Mato Grosso" },
+  { sigla: "MS", nome: "Mato Grosso do Sul" },
+  { sigla: "MG", nome: "Minas Gerais" },
+  { sigla: "PA", nome: "Pará" },
+  { sigla: "PB", nome: "Paraíba" },
+  { sigla: "PR", nome: "Paraná" },
+  { sigla: "PE", nome: "Pernambuco" },
+  { sigla: "PI", nome: "Piauí" },
+  { sigla: "RJ", nome: "Rio de Janeiro" },
+  { sigla: "RN", nome: "Rio Grande do Norte" },
+  { sigla: "RS", nome: "Rio Grande do Sul" },
+  { sigla: "RO", nome: "Rondônia" },
+  { sigla: "RR", nome: "Roraima" },
+  { sigla: "SC", nome: "Santa Catarina" },
+  { sigla: "SP", nome: "São Paulo" },
+  { sigla: "SE", nome: "Sergipe" },
+  { sigla: "TO", nome: "Tocantins" },
+];
+
 /* ========== Helpers ========== */
 function Tags({ label, items, setItems, placeholder = "Digite e tecle Enter" }) {
   const [v, setV] = useState("");
   function onKeyDown(e) {
     if (e.key === "Enter" && v.trim()) {
+      e.preventDefault();
       const value = v.trim();
       if (!items.includes(value)) setItems([...items, value]);
       setV("");
@@ -31,10 +63,12 @@ function Tags({ label, items, setItems, placeholder = "Digite e tecle Enter" }) 
               {t}
               <button
                 type="button"
-                onClick={() => setItems(items.filter(x => x !== t))}
+                onClick={() => setItems(items.filter((x) => x !== t))}
                 className="text-zinc-500 hover:text-red-600"
                 aria-label={`remover ${t}`}
-              >×</button>
+              >
+                ×
+              </button>
             </span>
           ))}
           <input
@@ -46,14 +80,20 @@ function Tags({ label, items, setItems, placeholder = "Digite e tecle Enter" }) 
           />
         </div>
       </div>
-      <p className="ui-hint">Tecle <kbd>Enter</kbd> para adicionar cada item.</p>
+      <p className="ui-hint">
+        Tecle <kbd>Enter</kbd> para adicionar cada item.
+      </p>
     </div>
   );
 }
 
 function ObjList({ label, items, setItems, schema, hint }) {
-  function add() { setItems([...items, { ...schema }]); }
-  function remove(i) { setItems(items.filter((_, idx) => idx !== i)); }
+  function add() {
+    setItems([...items, { ...schema }]);
+  }
+  function remove(i) {
+    setItems(items.filter((_, idx) => idx !== i));
+  }
   function update(i, key, val) {
     const next = [...items];
     next[i] = { ...next[i], [key]: val };
@@ -63,8 +103,11 @@ function ObjList({ label, items, setItems, schema, hint }) {
     <div className="ui-section">
       <div className="flex items-center justify-between">
         <span className="ui-label">{label}</span>
-        <button type="button" onClick={add}
-          className="text-xs px-2 py-1 rounded bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200">
+        <button
+          type="button"
+          onClick={add}
+          className="text-xs px-2 py-1 rounded bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200"
+        >
           + adicionar
         </button>
       </div>
@@ -73,7 +116,10 @@ function ObjList({ label, items, setItems, schema, hint }) {
 
       <div className="space-y-3">
         {items.map((it, i) => (
-          <div key={i} className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3">
+          <div
+            key={i}
+            className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3"
+          >
             <div className="grid sm:grid-cols-2 gap-2">
               {Object.keys(schema).map((k) => (
                 <input
@@ -86,8 +132,13 @@ function ObjList({ label, items, setItems, schema, hint }) {
               ))}
             </div>
             <div className="mt-2 text-right">
-              <button type="button" onClick={() => remove(i)}
-                className="text-xs text-red-600 hover:underline">remover</button>
+              <button
+                type="button"
+                onClick={() => remove(i)}
+                className="text-xs text-red-600 hover:underline"
+              >
+                remover
+              </button>
             </div>
           </div>
         ))}
@@ -107,6 +158,7 @@ export default function AuthPage() {
   // Login
   const [lUser, setLUser] = useState("");
   const [lPass, setLPass] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
 
   // Conta (signup)
   const [rUser, setRUser] = useState("");
@@ -118,8 +170,12 @@ export default function AuthPage() {
   const [foto, setFoto] = useState("https://i.pravatar.cc/150");
   const [cargo, setCargo] = useState("");
   const [resumo, setResumo] = useState("");
+
+  // Localização e área
   const [localizacao, setLocalizacao] = useState("");
-  const [area, setArea] = useState("Desenvolvimento");
+  const [estado, setEstado] = useState("");
+  const [cidade, setCidade] = useState("");
+  const [area, setArea] = useState("");
 
   const [habilidadesTecnicas, setHabilidadesTecnicas] = useState([]);
   const [softSkills, setSoftSkills] = useState([]);
@@ -136,10 +192,13 @@ export default function AuthPage() {
   async function handleLogin(e) {
     e.preventDefault();
     try {
+      setLoginLoading(true);
       await authLogin(lUser, lPass);
       navigate("/perfis");
     } catch (err) {
       alert(err?.response?.data?.error || "Erro ao entrar");
+    } finally {
+      setLoginLoading(false);
     }
   }
 
@@ -149,10 +208,24 @@ export default function AuthPage() {
     if (rPass !== confirm) return alert("Senhas diferentes.");
     if (!nome || !cargo) return alert("Informe pelo menos Nome e Cargo.");
 
+    // Garantir localizacao montada no submit
+    const locFinal =
+      cidade && estado ? `${cidade} - ${estado}` : localizacao || cidade || estado;
     const profile = {
-      nome, foto, cargo, resumo, localizacao, area,
-      habilidadesTecnicas, softSkills, experiencias,
-      formacao, projetos, certificacoes, idiomas, areasInteresse,
+      nome,
+      foto,
+      cargo,
+      resumo,
+      localizacao: locFinal,
+      area,
+      habilidadesTecnicas,
+      softSkills,
+      experiencias,
+      formacao,
+      projetos,
+      certificacoes,
+      idiomas,
+      areasInteresse,
     };
 
     try {
@@ -164,228 +237,430 @@ export default function AuthPage() {
       navigate("/perfis");
     } catch (err) {
       console.error(err);
-      alert(err?.response?.data?.error || err?.message || "Erro ao registrar");
+      alert(
+        err?.response?.data?.error || err?.message || "Erro ao registrar"
+      );
     } finally {
       setLoading(false);
     }
   }
 
-  const areasOpts = ["Desenvolvimento", "Dados", "Design", "Infraestrutura", "Sistemas"];
-
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* fundo */}
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-slate-900 to-indigo-950" />
-      <div className="absolute -top-24 -right-24 h-[32rem] w-[32rem] rounded-full bg-indigo-500/20 blur-3xl" />
-      <div className="absolute -bottom-24 -left-24 h-[28rem] w-[28rem] rounded-full bg-white/10 blur-3xl" />
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-indigo-950 via-slate-950 to-sky-950">
+      {/* efeitos de fundo */}
+      <div className="pointer-events-none absolute -top-40 -right-32 h-[30rem] w-[30rem] rounded-full bg-sky-500/25 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-40 -left-32 h-[26rem] w-[26rem] rounded-full bg-indigo-500/20 blur-3xl" />
 
       {/* conteúdo */}
-      <div className="relative z-10 grid place-items-center px-4 py-12">
-        <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-8">
+      <div className="relative z-10 flex items-center justify-center px-4 py-10 lg:py-16">
+        <div className="w-full max-w-6xl flex flex-col lg:flex-row items-center lg:items-stretch gap-10 lg:gap-16">
+          {/* Lado esquerdo - texto da marca */}
+          <div className="flex-1 w-full text-center lg:text-left flex items-center justify-center">
+            <div className="space-y-6 max-w-xl">
+              <div className="flex items-center justify-center lg:justify-start gap-3">
+                <div className="h-11 w-11 rounded-2xl bg-slate-900/80 flex items-center justify-center shadow-lg shadow-sky-500/30">
+                  <img
+                    src="/skillup-logo.png"
+                    alt="SkillUp IA"
+                    className="h-7 w-7 object-contain"
+                  />
+                </div>
+                <Brand size={28} />
+              </div>
 
-          {/* Lado esquerdo com SEU LOGO */}
-          <div className="hidden lg:flex items-center justify-center">
-            <div className="text-center">
-              {/* Usa exclusivamente o arquivo do /public, como você pediu */}
-              <img
-                src="/public/skillup-logo.png"
-                alt="SkillUp IA"
-                className="mx-auto h-24 w-24 select-none"
-              />
-              {/* Você ainda pode manter o Brand abaixo, se quiser o texto estilizado juntos */}
-              {/* <Brand size={96} stacked /> */}
-              <h1 className="mt-6 text-3xl font-semibold text-white">
-                Conecte talentos. Potencialize times.
+              <h1 className="text-3xl sm:text-4xl xl:text-5xl font-semibold leading-tight text-slate-50">
+                Conecte talentos.{" "}
+                <span className="text-sky-400">Potencialize times.</span>
               </h1>
-              <p className="mt-3 text-white/80">
-                Encontre profissionais por habilidades, área e localização — rápido e com estilo.
+
+              <p className="text-sm sm:text-base text-slate-200/80 max-w-md mx-auto lg:mx-0">
+                Encontre profissionais por habilidades, área e localização —
+                rápido, inteligente e com o toque da IA.
               </p>
+
+              <div className="grid grid-cols-3 gap-3 max-w-md mx-auto lg:mx-0 text-sm">
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-3 text-left">
+                  <p className="text-[11px] uppercase tracking-wide text-slate-400">
+                    Perfis ativos
+                  </p>
+                  <p className="text-lg font-semibold text-slate-50">+3k</p>
+                </div>
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-3 text-left">
+                  <p className="text-[11px] uppercase tracking-wide text-slate-400">
+                    Empresas conectadas
+                  </p>
+                  <p className="text-lg font-semibold text-slate-50">+120</p>
+                </div>
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-3 text-left">
+                  <p className="text-[11px] uppercase tracking-wide text-slate-400">
+                    Match assertivo
+                  </p>
+                  <p className="text-lg font-semibold text-slate-50">92%</p>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Card de autenticação */}
-          <div className="ui-card">
-            <div className="flex items-center justify-between">
-              {/* Logo também no topo do card */}
-              <img
-                src="/public/skillup-logo.png"
-                alt="SkillUp IA"
-                className="h-9 w-9"
-              />
-              {/* Se quiser manter o componente de marca ao lado, pode deixar: */}
-              {/* <Brand size={36} /> */}
+          {/* Lado direito - card de autenticação */}
+          <div className="w-full max-w-md lg:max-w-lg">
+            <div className="ui-card rounded-3xl bg-slate-950/90 border border-slate-800 shadow-[0_18px_55px_rgba(15,23,42,0.95)] backdrop-blur">
+              {/* Header do card */}
+              <div className="px-7 pt-6 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-2 lg:hidden">
+                  <div className="h-9 w-9 rounded-2xl bg-slate-900/80 flex items-center justify-center">
+                    <img
+                      src="/skillup-logo.png"
+                      alt="SkillUp IA"
+                      className="h-5 w-5 object-contain"
+                    />
+                  </div>
+                  <Brand size={22} />
+                </div>
 
-              <div className="grid grid-cols-2 gap-2 bg-zinc-100 rounded-lg p-1">
-                <button
-                  onClick={() => setTab("login")}
-                  className={`ui-tab ${tab==="login" ? "bg-white shadow" : "text-zinc-600"}`}
+                <div
+                  className="ml-auto flex rounded-full bg-slate-900/90 p-1 text-xs font-medium"
+                  role="tablist"
+                  aria-label="Alternar entre login e criação de perfil"
                 >
-                  Login
-                </button>
-                <button
-                  onClick={() => setTab("signup")}
-                  className={`ui-tab ${tab==="signup" ? "bg-white shadow" : "text-zinc-600"}`}
-                >
-                  Criar Perfil
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => setTab("login")}
+                    role="tab"
+                    aria-selected={tab === "login"}
+                    className={`ui-tab px-4 py-1.5 rounded-full transition-colors ${
+                      tab === "login"
+                        ? "bg-sky-500 text-slate-950 shadow"
+                        : "text-slate-300 hover:bg-slate-800"
+                    }`}
+                  >
+                    Login
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTab("signup")}
+                    role="tab"
+                    aria-selected={tab === "signup"}
+                    className={`ui-tab px-4 py-1.5 rounded-full transition-colors ${
+                      tab === "signup"
+                        ? "bg-sky-500 text-slate-950 shadow"
+                        : "text-slate-300 hover:bg-slate-800"
+                    }`}
+                  >
+                    Criar perfil
+                  </button>
+                </div>
+              </div>
+
+              {/* Conteúdo do card */}
+              <div className="px-7 pb-7 pt-4">
+                {/* LOGIN */}
+                {tab === "login" && (
+                  <form onSubmit={handleLogin} className="space-y-5 mt-2">
+                    <div className="space-y-3">
+                      <div>
+                        <label className="ui-label text-slate-200">
+                          Usuário
+                        </label>
+                        <input
+                          required
+                          minLength={3}
+                          autoComplete="username"
+                          value={lUser}
+                          onChange={(e) => setLUser(e.target.value)}
+                          className="ui-input mt-1 bg-slate-900/80 border-slate-700 text-sm placeholder:text-slate-500"
+                          placeholder="seu usuário"
+                        />
+                      </div>
+                      <div>
+                        <label className="ui-label text-slate-200">
+                          Senha
+                        </label>
+                        <input
+                          required
+                          minLength={4}
+                          type="password"
+                          autoComplete="current-password"
+                          value={lPass}
+                          onChange={(e) => setLPass(e.target.value)}
+                          className="ui-input mt-1 bg-slate-900/80 border-slate-700 text-sm placeholder:text-slate-500"
+                          placeholder="••••••••"
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={loginLoading}
+                      className="ui-btn-primary w-full rounded-2xl bg-sky-500 hover:bg-sky-400 text-slate-900 font-semibold text-sm py-3 shadow-lg shadow-sky-500/30 disabled:opacity-70 disabled:cursor-not-allowed"
+                    >
+                      {loginLoading ? "Entrando…" : "Entrar"}
+                    </button>
+
+                    <p className="text-[11px] text-slate-400 text-center">
+                      Esqueceu a senha?{" "}
+                      <button
+                        type="button"
+                        className="text-sky-400 hover:underline"
+                      >
+                        Recuperar acesso
+                      </button>
+                    </p>
+                  </form>
+                )}
+
+                {/* SIGNUP COMPLETO */}
+                {tab === "signup" && (
+                  <form
+                    onSubmit={handleSignup}
+                    className="mt-4 grid grid-cols-1 gap-4 max-h-[65vh] overflow-y-auto pr-1"
+                  >
+                    {/* Conta */}
+                    <div className="ui-section">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="ui-badge">Passo 1</span>
+                        <span className="ui-label text-slate-100">
+                          Conta de acesso
+                        </span>
+                      </div>
+                      <div className="grid sm:grid-cols-3 gap-3">
+                        <div>
+                          <label className="ui-label text-slate-200">
+                            Usuário *
+                          </label>
+                          <input
+                            required
+                            minLength={3}
+                            autoComplete="username"
+                            value={rUser}
+                            onChange={(e) => setRUser(e.target.value)}
+                            className="ui-input mt-1 bg-slate-900/80 border-slate-700 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="ui-label text-slate-200">
+                            Senha *
+                          </label>
+                          <input
+                            required
+                            minLength={4}
+                            type="password"
+                            autoComplete="new-password"
+                            value={rPass}
+                            onChange={(e) => setRPass(e.target.value)}
+                            className="ui-input mt-1 bg-slate-900/80 border-slate-700 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="ui-label text-slate-200">
+                            Confirmar *
+                          </label>
+                          <input
+                            required
+                            minLength={4}
+                            type="password"
+                            autoComplete="new-password"
+                            value={confirm}
+                            onChange={(e) => setConfirm(e.target.value)}
+                            className="ui-input mt-1 bg-slate-900/80 border-slate-700 text-sm"
+                          />
+                        </div>
+                      </div>
+                      <p className="ui-hint text-slate-400 mt-1">
+                        Os campos marcados com * são obrigatórios.
+                      </p>
+                    </div>
+
+                    {/* Perfil básico */}
+                    <div className="ui-section">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="ui-badge">Passo 2</span>
+                        <span className="ui-label text-slate-100">
+                          Perfil básico
+                        </span>
+                      </div>
+                      <div className="grid sm:grid-cols-2 gap-3">
+                        <div className="sm:col-span-2">
+                          <label className="ui-label text-slate-200">
+                            Nome (card) *
+                          </label>
+                          <input
+                            required
+                            value={nome}
+                            onChange={(e) => setNome(e.target.value)}
+                            className="ui-input mt-1 bg-slate-900/80 border-slate-700 text-sm"
+                            placeholder="Seu nome completo"
+                          />
+                        </div>
+                        <div>
+                          <label className="ui-label text-slate-200">
+                            Cargo *
+                          </label>
+                          <input
+                            required
+                            value={cargo}
+                            onChange={(e) => setCargo(e.target.value)}
+                            className="ui-input mt-1 bg-slate-900/80 border-slate-700 text-sm"
+                            placeholder="Ex.: Eng. de Software"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="ui-label text-slate-200">
+                            Cidade
+                          </label>
+                          <input
+                            value={cidade}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              setCidade(value);
+                              const loc = estado ? `${value} - ${estado}` : value;
+                              setLocalizacao(loc);
+                            }}
+                            className="ui-input mt-1 bg-slate-900/80 border-slate-700 text-sm"
+                            placeholder="Ex.: São Paulo"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="ui-label text-slate-200">
+                            Estado
+                          </label>
+                          <select
+                            value={estado}
+                            onChange={(e) => {
+                              const uf = e.target.value;
+                              setEstado(uf);
+                              const loc = cidade ? `${cidade} - ${uf}` : uf;
+                              setLocalizacao(loc);
+                            }}
+                            className="ui-input mt-1 bg-slate-900/80 border-slate-700 text-sm"
+                          >
+                            <option value="">Selecione</option>
+                            {ESTADOS_BRASIL.map((uf) => (
+                              <option key={uf.sigla} value={uf.sigla}>
+                                {uf.sigla} - {uf.nome}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <label className="ui-label text-slate-200">
+                            Área
+                          </label>
+                          <input
+                            value={area}
+                            onChange={(e) => setArea(e.target.value)}
+                            className="ui-input mt-1 bg-slate-900/80 border-slate-700 text-sm"
+                            placeholder="Ex.: Desenvolvimento, Dados, Design…"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <label className="ui-label text-slate-200">
+                            Resumo
+                          </label>
+                          <textarea
+                            rows={3}
+                            value={resumo}
+                            onChange={(e) => setResumo(e.target.value)}
+                            className="ui-input mt-1 bg-slate-900/80 border-slate-700 text-sm"
+                            placeholder="Conte rapidamente sua experiência e foco."
+                          />
+                        </div>
+                        <div className="sm:col-span-2">
+                          <label className="ui-label text-slate-200">
+                            URL da foto
+                          </label>
+                          <input
+                            value={foto}
+                            onChange={(e) => setFoto(e.target.value)}
+                            className="ui-input mt-1 bg-slate-900/80 border-slate-700 text-sm"
+                            placeholder="https://..."
+                          />
+                          <p className="ui-hint text-slate-400 mt-1">
+                            Dica: use uma foto quadrada (1:1) para melhor
+                            recorte.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Skills */}
+                    <Tags
+                      label="Habilidades técnicas"
+                      items={habilidadesTecnicas}
+                      setItems={setHabilidadesTecnicas}
+                      placeholder="Ex.: React, Docker, SQL"
+                    />
+                    <Tags
+                      label="Soft skills"
+                      items={softSkills}
+                      setItems={setSoftSkills}
+                      placeholder="Ex.: Comunicação, Liderança"
+                    />
+
+                    {/* Experiências / Formação / Projetos */}
+                    <ObjList
+                      label="Experiências"
+                      items={experiencias}
+                      setItems={setExperiencias}
+                      schema={{
+                        empresa: "",
+                        cargo: "",
+                        inicio: "",
+                        fim: "",
+                        descricao: "",
+                      }}
+                      hint="Preencha empresa, cargo, período e uma breve descrição."
+                    />
+                    <ObjList
+                      label="Formação"
+                      items={formacao}
+                      setItems={setFormacao}
+                      schema={{ curso: "", instituicao: "", ano: "" }}
+                    />
+                    <ObjList
+                      label="Projetos"
+                      items={projetos}
+                      setItems={setProjetos}
+                      schema={{ titulo: "", link: "", descricao: "" }}
+                    />
+
+                    {/* Extras */}
+                    <Tags
+                      label="Certificações"
+                      items={certificacoes}
+                      setItems={setCertificacoes}
+                      placeholder="Ex.: AZ-900, AWS CCP"
+                    />
+                    <ObjList
+                      label="Idiomas"
+                      items={idiomas}
+                      setItems={setIdiomas}
+                      schema={{ idioma: "", nivel: "" }}
+                    />
+                    <Tags
+                      label="Áreas de interesse"
+                      items={areasInteresse}
+                      setItems={setAreasInteresse}
+                      placeholder="Ex.: Sustentabilidade, Esportes"
+                    />
+
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="ui-btn-primary w-full rounded-2xl bg-sky-500 hover:bg-sky-400 text-slate-900 font-semibold text-sm py-3 shadow-lg shadow-sky-500/30 disabled:opacity-70 disabled:cursor-not-allowed"
+                    >
+                      {loading ? "Criando…" : "Criar conta e card"}
+                    </button>
+                    <p className="ui-hint text-slate-400 text-center pb-1">
+                      Seu card será adicionado automaticamente ao fim da lista.
+                    </p>
+                  </form>
+                )}
               </div>
             </div>
-
-            {/* LOGIN */}
-            {tab === "login" && (
-              <form onSubmit={handleLogin} className="mt-6 space-y-4">
-                <div className="ui-section">
-                  <div>
-                    <label className="ui-label">Usuário</label>
-                    <input
-                      required
-                      value={lUser}
-                      onChange={(e)=>setLUser(e.target.value)}
-                      className="ui-input mt-1"
-                      placeholder="seu usuário"
-                    />
-                  </div>
-                  <div>
-                    <label className="ui-label">Senha</label>
-                    <input
-                      required
-                      type="password"
-                      value={lPass}
-                      onChange={(e)=>setLPass(e.target.value)}
-                      className="ui-input mt-1"
-                      placeholder="••••••••"
-                    />
-                  </div>
-                </div>
-                <button className="ui-btn-primary">Entrar</button>
-              </form>
-            )}
-
-            {/* SIGNUP COMPLETO */}
-            {tab === "signup" && (
-              <form onSubmit={handleSignup} className="mt-6 grid grid-cols-1 gap-4">
-
-                {/* Conta */}
-                <div className="ui-section">
-                  <div className="flex items-center gap-2">
-                    <span className="ui-badge">Passo 1</span>
-                    <span className="ui-label">Conta de acesso</span>
-                  </div>
-                  <div className="grid sm:grid-cols-3 gap-3">
-                    <div>
-                      <label className="ui-label">Usuário *</label>
-                      <input required value={rUser} onChange={e=>setRUser(e.target.value)} className="ui-input mt-1" />
-                    </div>
-                    <div>
-                      <label className="ui-label">Senha *</label>
-                      <input required type="password" value={rPass} onChange={e=>setRPass(e.target.value)} className="ui-input mt-1" />
-                    </div>
-                    <div>
-                      <label className="ui-label">Confirmar *</label>
-                      <input required type="password" value={confirm} onChange={e=>setConfirm(e.target.value)} className="ui-input mt-1" />
-                    </div>
-                  </div>
-                  <p className="ui-hint">Os campos marcados com * são obrigatórios.</p>
-                </div>
-
-                {/* Perfil básico */}
-                <div className="ui-section">
-                  <div className="flex items-center gap-2">
-                    <span className="ui-badge">Passo 2</span>
-                    <span className="ui-label">Perfil básico</span>
-                  </div>
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    <div className="sm:col-span-2">
-                      <label className="ui-label">Nome (card) *</label>
-                      <input required value={nome} onChange={e=>setNome(e.target.value)} className="ui-input mt-1" placeholder="Seu nome completo" />
-                    </div>
-                    <div>
-                      <label className="ui-label">Cargo *</label>
-                      <input required value={cargo} onChange={e=>setCargo(e.target.value)} className="ui-input mt-1" placeholder="Ex.: Eng. de Software" />
-                    </div>
-                    <div>
-                      <label className="ui-label">Localização</label>
-                      <input value={localizacao} onChange={e=>setLocalizacao(e.target.value)} className="ui-input mt-1" placeholder="Cidade - UF" />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="ui-label">Área</label>
-                      <select value={area} onChange={e=>setArea(e.target.value)} className="ui-input mt-1">
-                        {areasOpts.map(a => <option key={a}>{a}</option>)}
-                      </select>
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="ui-label">Resumo</label>
-                      <textarea rows={3} value={resumo} onChange={e=>setResumo(e.target.value)} className="ui-input mt-1" placeholder="Conte rapidamente sua experiência e foco." />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="ui-label">URL da foto</label>
-                      <input value={foto} onChange={e=>setFoto(e.target.value)} className="ui-input mt-1" placeholder="https://..." />
-                      <p className="ui-hint">Dica: use uma foto quadrada (1:1) para melhor recorte.</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Skills */}
-                <Tags
-                  label="Habilidades técnicas"
-                  items={habilidadesTecnicas}
-                  setItems={setHabilidadesTecnicas}
-                  placeholder="Ex.: React, Docker, SQL"
-                />
-                <Tags
-                  label="Soft skills"
-                  items={softSkills}
-                  setItems={setSoftSkills}
-                  placeholder="Ex.: Comunicação, Liderança"
-                />
-
-                {/* Experiências / Formação / Projetos */}
-                <ObjList
-                  label="Experiências"
-                  items={experiencias}
-                  setItems={setExperiencias}
-                  schema={{ empresa: "", cargo: "", inicio: "", fim: "", descricao: "" }}
-                  hint="Preencha empresa, cargo, período e uma breve descrição."
-                />
-                <ObjList
-                  label="Formação"
-                  items={formacao}
-                  setItems={setFormacao}
-                  schema={{ curso: "", instituicao: "", ano: "" }}
-                />
-                <ObjList
-                  label="Projetos"
-                  items={projetos}
-                  setItems={setProjetos}
-                  schema={{ titulo: "", link: "", descricao: "" }}
-                />
-
-                {/* Extras */}
-                <Tags
-                  label="Certificações"
-                  items={certificacoes}
-                  setItems={setCertificacoes}
-                  placeholder="Ex.: AZ-900, AWS CCP"
-                />
-                <ObjList
-                  label="Idiomas"
-                  items={idiomas}
-                  setItems={setIdiomas}
-                  schema={{ idioma: "", nivel: "" }}
-                />
-                <Tags
-                  label="Áreas de interesse"
-                  items={areasInteresse}
-                  setItems={setAreasInteresse}
-                  placeholder="Ex.: Sustentabilidade, Esportes"
-                />
-
-                <button type="submit" disabled={loading} className="ui-btn-primary">
-                  {loading ? "Criando…" : "Criar conta e card"}
-                </button>
-                <p className="ui-hint">Seu card será adicionado automaticamente ao fim da lista.</p>
-              </form>
-            )}
           </div>
         </div>
       </div>
