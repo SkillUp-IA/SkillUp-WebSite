@@ -271,9 +271,9 @@ export default function AuthPage() {
               <div className="flex items-center justify-center lg:justify-start gap-4">
                 <div className="h-16 w-16 rounded-3xl bg-slate-900/90 flex items-center justify-center shadow-[0_0_35px_rgba(56,189,248,0.55)] border border-sky-500/40">
                   <img
-                    src="/skillup-logo.png"
+                    src="/skillup-logo-branca.png"
                     alt="SkillUp IA"
-                    className="h-11 w-11 object-contain"
+                    className="h-16 w-16 object-contain"
                   />
                 </div>
                 <div className="flex flex-col">
@@ -325,20 +325,9 @@ export default function AuthPage() {
             <div className="ui-card rounded-3xl bg-slate-950/90 border border-slate-800 shadow-[0_18px_55px_rgba(15,23,42,0.95)] backdrop-blur">
               {/* Header do card */}
               <div className="px-7 pt-6 flex items-center justify-between gap-4">
-                {/* Brand menor só no mobile */}
-                <div className="flex items-center gap-2 lg:hidden">
-                  <div className="h-9 w-9 rounded-2xl bg-slate-900/80 flex items-center justify-center">
-                    <img
-                      src="/skillup-logo.png"
-                      alt="SkillUp IA"
-                      className="h-5 w-5 object-contain"
-                    />
-                  </div>
-                  <Brand size={22} />
-                </div>
 
                 <div
-                  className="ml-auto flex rounded-full bg-slate-900/90 p-1 text-xs font-medium"
+                  className="ml-25 flex rounded-full bg-slate-900/90 p-1 text-xs font-medium"
                   role="tablist"
                   aria-label="Alternar entre login e criação de perfil"
                 >
@@ -416,15 +405,6 @@ export default function AuthPage() {
                       {loginLoading ? "Entrando…" : "Entrar"}
                     </button>
 
-                    <p className="text-[11px] text-slate-400 text-center">
-                      Esqueceu a senha?{" "}
-                      <button
-                        type="button"
-                        className="text-sky-400 hover:underline"
-                      >
-                        Recuperar acesso
-                      </button>
-                    </p>
                   </form>
                 )}
 
