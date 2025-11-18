@@ -5,66 +5,36 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { createProfile } from "../lib/api.js";
 import Brand from "../components/Brand.jsx";
 
-/* ========== Constantes ========== */
-const ESTADOS_BRASIL = [
-  { sigla: "AC", nome: "Acre" },
-  { sigla: "AL", nome: "Alagoas" },
-  { sigla: "AP", nome: "Amapá" },
-  { sigla: "AM", nome: "Amazonas" },
-  { sigla: "BA", nome: "Bahia" },
-  { sigla: "CE", nome: "Ceará" },
-  { sigla: "DF", nome: "Distrito Federal" },
-  { sigla: "ES", nome: "Espírito Santo" },
-  { sigla: "GO", nome: "Goiás" },
-  { sigla: "MA", nome: "Maranhão" },
-  { sigla: "MT", nome: "Mato Grosso" },
-  { sigla: "MS", nome: "Mato Grosso do Sul" },
-  { sigla: "MG", nome: "Minas Gerais" },
-  { sigla: "PA", nome: "Pará" },
-  { sigla: "PB", nome: "Paraíba" },
-  { sigla: "PR", nome: "Paraná" },
-  { sigla: "PE", nome: "Pernambuco" },
-  { sigla: "PI", nome: "Piauí" },
-  { sigla: "RJ", nome: "Rio de Janeiro" },
-  { sigla: "RN", nome: "Rio Grande do Norte" },
-  { sigla: "RS", nome: "Rio Grande do Sul" },
-  { sigla: "RO", nome: "Rondônia" },
-  { sigla: "RR", nome: "Roraima" },
-  { sigla: "SC", nome: "Santa Catarina" },
-  { sigla: "SP", nome: "São Paulo" },
-  { sigla: "SE", nome: "Sergipe" },
-  { sigla: "TO", nome: "Tocantins" },
-];
-
 /* ========== Helpers ========== */
 function Tags({ label, items, setItems, placeholder = "Digite e tecle Enter" }) {
   const [v, setV] = useState("");
+
   function onKeyDown(e) {
     if (e.key === "Enter" && v.trim()) {
-      e.preventDefault();
       const value = v.trim();
       if (!items.includes(value)) setItems([...items, value]);
       setV("");
     }
   }
+
   return (
-    <div className="ui-section">
+    <div className="space-y-2">
       <div className="flex items-center justify-between">
         <span className="ui-label">{label}</span>
         <span className="ui-badge">Campo de lista</span>
       </div>
-      <div className="rounded-xl border border-zinc-300 dark:border-zinc-700 p-2 bg-white dark:bg-zinc-900">
+      <div className="rounded-xl border border-slate-700 bg-slate-900/80 p-2">
         <div className="flex flex-wrap gap-2">
           {items.map((t, i) => (
             <span
               key={`${t}-${i}`}
-              className="px-2 py-1 text-xs rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center gap-1"
+              className="px-2 py-1 text-xs rounded-full bg-slate-800 border border-slate-700 flex items-center gap-1"
             >
               {t}
               <button
                 type="button"
                 onClick={() => setItems(items.filter((x) => x !== t))}
-                className="text-zinc-500 hover:text-red-600"
+                className="text-slate-400 hover:text-red-400"
                 aria-label={`remover ${t}`}
               >
                 ×
@@ -76,7 +46,7 @@ function Tags({ label, items, setItems, placeholder = "Digite e tecle Enter" }) 
             onChange={(e) => setV(e.target.value)}
             onKeyDown={onKeyDown}
             placeholder={placeholder}
-            className="flex-1 min-w-40 bg-transparent outline-none text-sm px-1"
+            className="flex-1 min-w-40 bg-transparent outline-none text-sm px-1 text-slate-100 placeholder:text-slate-500"
           />
         </div>
       </div>
@@ -99,26 +69,29 @@ function ObjList({ label, items, setItems, schema, hint }) {
     next[i] = { ...next[i], [key]: val };
     setItems(next);
   }
+
   return (
-    <div className="ui-section">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
         <span className="ui-label">{label}</span>
         <button
           type="button"
           onClick={add}
-          className="text-xs px-2 py-1 rounded bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200"
+          className="text-xs px-2 py-1 rounded bg-slate-800 hover:bg-slate-700"
         >
           + adicionar
         </button>
       </div>
 
-      {items.length === 0 && <p className="ui-hint">Nenhum item adicionado.</p>}
+      {items.length === 0 && (
+        <p className="ui-hint">Nenhum item adicionado ainda.</p>
+      )}
 
       <div className="space-y-3">
         {items.map((it, i) => (
           <div
             key={i}
-            className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3"
+            className="rounded-xl border border-slate-800 bg-slate-950/60 p-3"
           >
             <div className="grid sm:grid-cols-2 gap-2">
               {Object.keys(schema).map((k) => (
@@ -127,7 +100,7 @@ function ObjList({ label, items, setItems, schema, hint }) {
                   value={it[k] ?? ""}
                   onChange={(e) => update(i, k, e.target.value)}
                   placeholder={k}
-                  className="ui-input"
+                  className="ui-input text-slate-100 placeholder:text-slate-500"
                 />
               ))}
             </div>
@@ -135,7 +108,7 @@ function ObjList({ label, items, setItems, schema, hint }) {
               <button
                 type="button"
                 onClick={() => remove(i)}
-                className="text-xs text-red-600 hover:underline"
+                className="text-xs text-red-400 hover:underline"
               >
                 remover
               </button>
@@ -148,6 +121,61 @@ function ObjList({ label, items, setItems, schema, hint }) {
     </div>
   );
 }
+
+/* Painel padrão de cada passo (card azul bonito) */
+function StepPanel({ badge, title, children }) {
+  return (
+    <section
+      className="
+        rounded-2xl
+        border border-slate-800/90
+        bg-gradient-to-br from-slate-950/90 via-slate-950/80 to-sky-950/40
+        shadow-lg shadow-sky-900/40
+        px-4 sm:px-5 py-4 sm:py-5
+        space-y-4
+      "
+    >
+      {(badge || title) && (
+        <div className="flex items-center gap-2 mb-2">
+          {badge && <span className="ui-badge">{badge}</span>}
+          {title && <span className="ui-label">{title}</span>}
+        </div>
+      )}
+      {children}
+    </section>
+  );
+}
+
+/* ========== Estados do Brasil ========== */
+const ESTADOS_BRASIL = [
+  "AC",
+  "AL",
+  "AP",
+  "AM",
+  "BA",
+  "CE",
+  "DF",
+  "ES",
+  "GO",
+  "MA",
+  "MT",
+  "MS",
+  "MG",
+  "PA",
+  "PB",
+  "PR",
+  "PE",
+  "PI",
+  "RJ",
+  "RN",
+  "RS",
+  "RO",
+  "RR",
+  "SC",
+  "SP",
+  "SE",
+  "TO",
+];
 
 /* ========== Página ========== */
 export default function AuthPage() {
@@ -171,13 +199,7 @@ export default function AuthPage() {
   const [cargo, setCargo] = useState("");
   const [resumo, setResumo] = useState("");
 
-  // Redes (opcionais)
-  const [linkedin, setLinkedin] = useState("");
-  const [github, setGithub] = useState("");
-  const [portfolio, setPortfolio] = useState("");
-
   // Localização e área
-  const [localizacao, setLocalizacao] = useState("");
   const [estado, setEstado] = useState("");
   const [cidade, setCidade] = useState("");
   const [area, setArea] = useState("");
@@ -191,6 +213,12 @@ export default function AuthPage() {
   const [certificacoes, setCertificacoes] = useState([]);
   const [idiomas, setIdiomas] = useState([]);
   const [areasInteresse, setAreasInteresse] = useState([]);
+
+  // Redes sociais (opcional)
+  const [linkedin, setLinkedin] = useState("");
+  const [github, setGithub] = useState("");
+  const [portfolio, setPortfolio] = useState("");
+  const [instagram, setInstagram] = useState("");
 
   const [loading, setLoading] = useState(false);
 
@@ -212,16 +240,19 @@ export default function AuthPage() {
     if (!rUser || !rPass) return alert("Informe usuário e senha.");
     if (rPass !== confirm) return alert("Senhas diferentes.");
     if (!nome || !cargo) return alert("Informe pelo menos Nome e Cargo.");
+    if (!estado) return alert("Selecione um estado.");
 
-    const locFinal =
-      cidade && estado ? `${cidade} - ${estado}` : localizacao || cidade || estado;
+    const localizacao =
+      cidade && estado ? `${cidade} - ${estado}` : cidade || estado || "";
 
     const profile = {
       nome,
       foto,
       cargo,
       resumo,
-      localizacao: locFinal,
+      localizacao,
+      estado,
+      cidade,
       area,
       habilidadesTecnicas,
       softSkills,
@@ -231,10 +262,11 @@ export default function AuthPage() {
       certificacoes,
       idiomas,
       areasInteresse,
-      links: {
+      redes: {
         linkedin,
         github,
         portfolio,
+        instagram,
       },
     };
 
@@ -256,458 +288,361 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-indigo-950 via-slate-950 to-sky-950">
-      {/* efeitos de fundo */}
-      <div className="pointer-events-none absolute -top-40 -right-32 h-[30rem] w-[30rem] rounded-full bg-sky-500/25 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-40 -left-32 h-[26rem] w-[26rem] rounded-full bg-indigo-500/20 blur-3xl" />
+    <div className="min-h-screen relative overflow-hidden">
+      {/* fundo */}
+      <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-slate-950 to-sky-950" />
+      <div className="absolute -top-24 -right-24 h-[32rem] w-[32rem] rounded-full bg-sky-500/20 blur-3xl" />
+      <div className="absolute -bottom-24 -left-24 h-[28rem] w-[28rem] rounded-full bg-sky-300/10 blur-3xl" />
 
-      {/* conteúdo */}
-      <div className="relative z-10 flex items-center justify-center px-4 py-10 lg:py-16">
-        <div className="w-full max-w-6xl flex flex-col lg:flex-row items-center lg:items-stretch gap-10 lg:gap-16">
-          {/* Lado esquerdo - hero da marca */}
-          <div className="flex-1 w-full text-center lg:text-left flex items-center justify-center">
-            <div className="space-y-6 max-w-xl">
-              {/* Logo + nome bem grandes */}
-              <div className="flex items-center justify-center lg:justify-start gap-4">
-                <div className="h-16 w-16 rounded-3xl bg-slate-900/90 flex items-center justify-center shadow-[0_0_35px_rgba(56,189,248,0.55)] border border-sky-500/40">
-                  <img
-                    src="/skillup-logo-branca.png"
-                    alt="SkillUp IA"
-                    className="h-16 w-16 object-contain"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-3xl sm:text-4xl font-semibold tracking-tight text-slate-50">
-                    <span className="text-sky-400">Skill</span>
-                    <span className="text-slate-50">Up</span>{" "}
-                    <span className="text-slate-300">IA</span>
-                  </span>
-                  <span className="text-xs sm:text-sm text-slate-400 mt-1">
-                    Conectando talentos, IA e oportunidades.
-                  </span>
-                </div>
-              </div>
-
-              {/* Headline principal */}
-              <h1 className="text-3xl sm:text-4xl xl:text-5xl font-semibold leading-tight text-slate-50">
+      {/* Conteúdo */}
+      <div className="relative z-10 grid place-items-center px-4 py-12">
+        <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-10 items-center">
+          {/* Lado esquerdo com logo / hero */}
+          <div className="hidden lg:flex items-center justify-center">
+            <div className="text-left max-w-md">
+              <Brand size={64} />
+              <h1 className="mt-6 text-3xl lg:text-4xl font-semibold text-white">
                 Conecte talentos.{" "}
                 <span className="text-sky-400">Potencialize times.</span>
               </h1>
-
-              {/* Subtexto que você gostou */}
-              <p className="text-sm sm:text-base text-slate-200/80 max-w-md mx-auto lg:mx-0">
-                Encontre profissionais por habilidades, área e localização —
-                rápido, inteligente e com o toque da IA.
+              <p className="mt-3 text-slate-200/80 text-sm">
+                Encontre profissionais por habilidades, área e localização — rápido,
+                inteligente e com o toque da IA.
               </p>
-
-              {/* Bloco com o texto da SkillUp IA */}
-              <div className="mt-4 max-w-xl mx-auto lg:mx-0 text-sm sm:text-base text-slate-200/90 leading-relaxed bg-slate-950/50 border border-slate-800/80 rounded-2xl p-4 sm:p-5 shadow-[0_18px_45px_rgba(15,23,42,0.9)]">
-                <p>
-                  <strong>SkillUp IA</strong> é uma plataforma que conecta
-                  pessoas e oportunidades. Nela, os profissionais criam seus
-                  perfis com currículo, habilidades e experiências, formando uma
-                  grande rede onde empresas podem encontrar talentos de forma
-                  rápida e assertiva.
-                </p>
-                <p className="mt-3">
-                  Além disso, a SkillUp IA monta trilhas de aprendizado
-                  personalizadas, mostrando quais cursos e conteúdos a pessoa
-                  precisa estudar para chegar no cargo que deseja. Assim, o
-                  usuário acompanha sua evolução, melhora o currículo e aumenta
-                  suas chances de empregabilidade.
-                </p>
-              </div>
             </div>
           </div>
 
-          {/* Lado direito - card de autenticação */}
-          <div className="w-full max-w-md lg:max-w-lg">
-            <div className="ui-card rounded-3xl bg-slate-950/90 border border-slate-800 shadow-[0_18px_55px_rgba(15,23,42,0.95)] backdrop-blur">
-              {/* Header do card */}
-              <div className="px-7 pt-6 flex items-center justify-between gap-4">
-
-                <div
-                  className="ml-25 flex rounded-full bg-slate-900/90 p-1 text-xs font-medium"
-                  role="tablist"
-                  aria-label="Alternar entre login e criação de perfil"
+          {/* Card de autenticação */}
+          <div
+            className="
+              ui-card
+              rounded-3xl
+              bg-gradient-to-br from-slate-950 via-slate-950 to-sky-950/80
+              border border-slate-800/80
+              shadow-2xl shadow-sky-900/40
+              px-6 py-6 sm:px-8 sm:py-8
+              max-h-[80vh]
+              overflow-y-auto
+            "
+          >
+            {/* Tabs Login / Criar perfil */}
+            <div className="flex items-center justify-center mb-6">
+              <div className="inline-flex bg-slate-900/80 rounded-full p-1 border border-slate-700">
+                <button
+                  type="button"
+                  onClick={() => setTab("login")}
+                  className={`px-5 py-1.5 text-sm rounded-full transition ${
+                    tab === "login"
+                      ? "bg-sky-500 text-slate-950 shadow-md shadow-sky-500/40"
+                      : "text-slate-300 hover:text-white"
+                  }`}
                 >
-                  <button
-                    type="button"
-                    onClick={() => setTab("login")}
-                    role="tab"
-                    aria-selected={tab === "login"}
-                    className={`ui-tab px-4 py-1.5 rounded-full transition-colors ${
-                      tab === "login"
-                        ? "bg-sky-500 text-slate-950 shadow"
-                        : "text-slate-300 hover:bg-slate-800"
-                    }`}
-                  >
-                    Login
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setTab("signup")}
-                    role="tab"
-                    aria-selected={tab === "signup"}
-                    className={`ui-tab px-4 py-1.5 rounded-full transition-colors ${
-                      tab === "signup"
-                        ? "bg-sky-500 text-slate-950 shadow"
-                        : "text-slate-300 hover:bg-slate-800"
-                    }`}
-                  >
-                    Criar perfil
-                  </button>
-                </div>
-              </div>
-
-              {/* Conteúdo do card */}
-              <div className="px-7 pb-7 pt-4">
-                {/* LOGIN */}
-                {tab === "login" && (
-                  <form onSubmit={handleLogin} className="space-y-5 mt-2">
-                    <div className="space-y-3">
-                      <div>
-                        <label className="ui-label text-slate-200">
-                          Usuário
-                        </label>
-                        <input
-                          required
-                          minLength={3}
-                          autoComplete="username"
-                          value={lUser}
-                          onChange={(e) => setLUser(e.target.value)}
-                          className="ui-input mt-1 bg-slate-900/80 border-slate-700 text-sm placeholder:text-slate-500"
-                          placeholder="seu usuário"
-                        />
-                      </div>
-                      <div>
-                        <label className="ui-label text-slate-200">
-                          Senha
-                        </label>
-                        <input
-                          required
-                          minLength={4}
-                          type="password"
-                          autoComplete="current-password"
-                          value={lPass}
-                          onChange={(e) => setLPass(e.target.value)}
-                          className="ui-input mt-1 bg-slate-900/80 border-slate-700 text-sm placeholder:text-slate-500"
-                          placeholder="••••••••"
-                        />
-                      </div>
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={loginLoading}
-                      className="ui-btn-primary w-full rounded-2xl bg-sky-500 hover:bg-sky-400 text-slate-900 font-semibold text-sm py-3 shadow-lg shadow-sky-500/30 disabled:opacity-70 disabled:cursor-not-allowed"
-                    >
-                      {loginLoading ? "Entrando…" : "Entrar"}
-                    </button>
-
-                  </form>
-                )}
-
-                {/* SIGNUP COMPLETO */}
-                {tab === "signup" && (
-                  <form
-                    onSubmit={handleSignup}
-                    className="mt-4 grid grid-cols-1 gap-4 max-h-[65vh] overflow-y-auto pr-1"
-                  >
-                    {/* Conta */}
-                    <div className="ui-section">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="ui-badge">Passo 1</span>
-                        <span className="ui-label text-slate-100">
-                          Conta de acesso
-                        </span>
-                      </div>
-                      <div className="grid sm:grid-cols-3 gap-3">
-                        <div>
-                          <label className="ui-label text-slate-200">
-                            Usuário *
-                          </label>
-                          <input
-                            required
-                            minLength={3}
-                            autoComplete="username"
-                            value={rUser}
-                            onChange={(e) => setRUser(e.target.value)}
-                            className="ui-input mt-1 bg-slate-900/80 border-slate-700 text-sm"
-                          />
-                        </div>
-                        <div>
-                          <label className="ui-label text-slate-200">
-                            Senha *
-                          </label>
-                          <input
-                            required
-                            minLength={4}
-                            type="password"
-                            autoComplete="new-password"
-                            value={rPass}
-                            onChange={(e) => setRPass(e.target.value)}
-                            className="ui-input mt-1 bg-slate-900/80 border-slate-700 text-sm"
-                          />
-                        </div>
-                        <div>
-                          <label className="ui-label text-slate-200">
-                            Confirmar *
-                          </label>
-                          <input
-                            required
-                            minLength={4}
-                            type="password"
-                            autoComplete="new-password"
-                            value={confirm}
-                            onChange={(e) => setConfirm(e.target.value)}
-                            className="ui-input mt-1 bg-slate-900/80 border-slate-700 text-sm"
-                          />
-                        </div>
-                      </div>
-                      <p className="ui-hint text-slate-400 mt-1">
-                        Os campos marcados com * são obrigatórios.
-                      </p>
-                    </div>
-
-                    {/* Perfil básico */}
-                    <div className="ui-section">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="ui-badge">Passo 2</span>
-                        <span className="ui-label text-slate-100">
-                          Perfil básico
-                        </span>
-                      </div>
-                      <div className="grid sm:grid-cols-2 gap-3">
-                        <div className="sm:col-span-2">
-                          <label className="ui-label text-slate-200">
-                            Nome (card) *
-                          </label>
-                          <input
-                            required
-                            value={nome}
-                            onChange={(e) => setNome(e.target.value)}
-                            className="ui-input mt-1 bg-slate-900/80 border-slate-700 text-sm"
-                            placeholder="Seu nome completo"
-                          />
-                        </div>
-                        <div>
-                          <label className="ui-label text-slate-200">
-                            Cargo *
-                          </label>
-                          <input
-                            required
-                            value={cargo}
-                            onChange={(e) => setCargo(e.target.value)}
-                            className="ui-input mt-1 bg-slate-900/80 border-slate-700 text-sm"
-                            placeholder="Ex.: Eng. de Software"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="ui-label text-slate-200">
-                            Cidade
-                          </label>
-                          <input
-                            value={cidade}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              setCidade(value);
-                              const loc = estado ? `${value} - ${estado}` : value;
-                              setLocalizacao(loc);
-                            }}
-                            className="ui-input mt-1 bg-slate-900/80 border-slate-700 text-sm"
-                            placeholder="Ex.: São Paulo"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="ui-label text-slate-200">
-                            Estado
-                          </label>
-                          <select
-                            value={estado}
-                            onChange={(e) => {
-                              const uf = e.target.value;
-                              setEstado(uf);
-                              const loc = cidade ? `${cidade} - ${uf}` : uf;
-                              setLocalizacao(loc);
-                            }}
-                            className="ui-input mt-1 bg-slate-900/80 border-slate-700 text-sm"
-                          >
-                            <option value="">Selecione</option>
-                            {ESTADOS_BRASIL.map((uf) => (
-                              <option key={uf.sigla} value={uf.sigla}>
-                                {uf.sigla} - {uf.nome}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div className="sm:col-span-2">
-                          <label className="ui-label text-slate-200">
-                            Área
-                          </label>
-                          <input
-                            value={area}
-                            onChange={(e) => setArea(e.target.value)}
-                            className="ui-input mt-1 bg-slate-900/80 border-slate-700 text-sm"
-                            placeholder="Ex.: Desenvolvimento, Dados, Design…"
-                          />
-                        </div>
-
-                        <div className="sm:col-span-2">
-                          <label className="ui-label text-slate-200">
-                            Resumo
-                          </label>
-                          <textarea
-                            rows={3}
-                            value={resumo}
-                            onChange={(e) => setResumo(e.target.value)}
-                            className="ui-input mt-1 bg-slate-900/80 border-slate-700 text-sm"
-                            placeholder="Conte rapidamente sua experiência e foco."
-                          />
-                        </div>
-
-                        <div className="sm:col-span-2">
-                          <label className="ui-label text-slate-200">
-                            URL da foto
-                          </label>
-                          <input
-                            value={foto}
-                            onChange={(e) => setFoto(e.target.value)}
-                            className="ui-input mt-1 bg-slate-900/80 border-slate-700 text-sm"
-                            placeholder="https://..."
-                          />
-                          <p className="ui-hint text-slate-400 mt-1">
-                            Dica: use uma foto quadrada (1:1) para melhor
-                            recorte.
-                          </p>
-                        </div>
-
-                        {/* Redes (opcional) */}
-                        <div className="sm:col-span-2 mt-2">
-                          <label className="ui-label text-slate-200">
-                            Redes (opcional)
-                          </label>
-                          <div className="grid sm:grid-cols-3 gap-3 mt-1">
-                            <div>
-                              <span className="text-[11px] text-slate-400">
-                                LinkedIn
-                              </span>
-                              <input
-                                value={linkedin}
-                                onChange={(e) => setLinkedin(e.target.value)}
-                                className="ui-input mt-1 bg-slate-900/80 border-slate-700 text-xs"
-                                placeholder="https://linkedin.com/in/..."
-                              />
-                            </div>
-                            <div>
-                              <span className="text-[11px] text-slate-400">
-                                GitHub
-                              </span>
-                              <input
-                                value={github}
-                                onChange={(e) => setGithub(e.target.value)}
-                                className="ui-input mt-1 bg-slate-900/80 border-slate-700 text-xs"
-                                placeholder="https://github.com/..."
-                              />
-                            </div>
-                            <div>
-                              <span className="text-[11px] text-slate-400">
-                                Portfólio / Site
-                              </span>
-                              <input
-                                value={portfolio}
-                                onChange={(e) => setPortfolio(e.target.value)}
-                                className="ui-input mt-1 bg-slate-900/80 border-slate-700 text-xs"
-                                placeholder="https://seu-site.com"
-                              />
-                            </div>
-                          </div>
-                          <p className="ui-hint text-slate-400 mt-1">
-                            Preencha apenas as redes que você quiser deixar
-                            públicas.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Skills */}
-                    <Tags
-                      label="Habilidades técnicas"
-                      items={habilidadesTecnicas}
-                      setItems={setHabilidadesTecnicas}
-                      placeholder="Ex.: React, Docker, SQL"
-                    />
-                    <Tags
-                      label="Soft skills"
-                      items={softSkills}
-                      setItems={setSoftSkills}
-                      placeholder="Ex.: Comunicação, Liderança"
-                    />
-
-                    {/* Experiências / Formação / Projetos */}
-                    <ObjList
-                      label="Experiências"
-                      items={experiencias}
-                      setItems={setExperiencias}
-                      schema={{
-                        empresa: "",
-                        cargo: "",
-                        inicio: "",
-                        fim: "",
-                        descricao: "",
-                      }}
-                      hint="Preencha empresa, cargo, período e uma breve descrição."
-                    />
-                    <ObjList
-                      label="Formação"
-                      items={formacao}
-                      setItems={setFormacao}
-                      schema={{ curso: "", instituicao: "", ano: "" }}
-                    />
-                    <ObjList
-                      label="Projetos"
-                      items={projetos}
-                      setItems={setProjetos}
-                      schema={{ titulo: "", link: "", descricao: "" }}
-                    />
-
-                    {/* Extras */}
-                    <Tags
-                      label="Certificações"
-                      items={certificacoes}
-                      setItems={setCertificacoes}
-                      placeholder="Ex.: AZ-900, AWS CCP"
-                    />
-                    <ObjList
-                      label="Idiomas"
-                      items={idiomas}
-                      setItems={setIdiomas}
-                      schema={{ idioma: "", nivel: "" }}
-                    />
-                    <Tags
-                      label="Áreas de interesse"
-                      items={areasInteresse}
-                      setItems={setAreasInteresse}
-                      placeholder="Ex.: Sustentabilidade, Esportes"
-                    />
-
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="ui-btn-primary w-full rounded-2xl bg-sky-500 hover:bg-sky-400 text-slate-900 font-semibold text-sm py-3 shadow-lg shadow-sky-500/30 disabled:opacity-70 disabled:cursor-not-allowed"
-                    >
-                      {loading ? "Criando…" : "Criar conta e card"}
-                    </button>
-                    <p className="ui-hint text-slate-400 text-center pb-1">
-                      Seu card será adicionado automaticamente ao fim da lista.
-                    </p>
-                  </form>
-                )}
+                  Login
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTab("signup")}
+                  className={`px-5 py-1.5 text-sm rounded-full transition ${
+                    tab === "signup"
+                      ? "bg-sky-500 text-slate-950 shadow-md shadow-sky-500/40"
+                      : "text-slate-300 hover:text-white"
+                  }`}
+                >
+                  Criar perfil
+                </button>
               </div>
             </div>
+
+            {/* LOGIN */}
+            {tab === "login" && (
+              <form onSubmit={handleLogin} className="space-y-4">
+                <StepPanel badge="Login" title="Acesse sua conta">
+                  <div className="space-y-3">
+                    <div>
+                      <label className="ui-label">Usuário</label>
+                      <input
+                        required
+                        value={lUser}
+                        onChange={(e) => setLUser(e.target.value)}
+                        className="ui-input mt-1 text-slate-100 placeholder:text-slate-500"
+                        placeholder="Seu usuário"
+                      />
+                    </div>
+                    <div>
+                      <label className="ui-label">Senha</label>
+                      <input
+                        required
+                        type="password"
+                        value={lPass}
+                        onChange={(e) => setLPass(e.target.value)}
+                        className="ui-input mt-1 text-slate-100 placeholder:text-slate-500"
+                        placeholder="••••••••"
+                      />
+                    </div>
+                  </div>
+                </StepPanel>
+
+                <button className="ui-btn-primary mt-2" disabled={loginLoading}>
+                  {loginLoading ? "Entrando..." : "Entrar"}
+                </button>
+              </form>
+            )}
+
+            {/* SIGNUP COMPLETO */}
+            {tab === "signup" && (
+              <form onSubmit={handleSignup} className="grid grid-cols-1 gap-4">
+                {/* Passo 1 - Conta */}
+                <StepPanel badge="Passo 1" title="Conta de acesso">
+                  <div className="grid sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="ui-label">Usuário *</label>
+                      <input
+                        required
+                        value={rUser}
+                        onChange={(e) => setRUser(e.target.value)}
+                        className="ui-input mt-1 text-slate-100 placeholder:text-slate-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="ui-label">Senha *</label>
+                      <input
+                        required
+                        type="password"
+                        value={rPass}
+                        onChange={(e) => setRPass(e.target.value)}
+                        className="ui-input mt-1 text-slate-100 placeholder:text-slate-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="ui-label">Confirmar *</label>
+                      <input
+                        required
+                        type="password"
+                        value={confirm}
+                        onChange={(e) => setConfirm(e.target.value)}
+                        className="ui-input mt-1 text-slate-100 placeholder:text-slate-500"
+                      />
+                    </div>
+                  </div>
+                  <p className="ui-hint">
+                    Os campos marcados com * são obrigatórios.
+                  </p>
+                </StepPanel>
+
+                {/* Passo 2 - Perfil básico */}
+                <StepPanel badge="Passo 2" title="Perfil básico">
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <div className="sm:col-span-2">
+                      <label className="ui-label">Nome (card) *</label>
+                      <input
+                        required
+                        value={nome}
+                        onChange={(e) => setNome(e.target.value)}
+                        className="ui-input mt-1 text-slate-100 placeholder:text-slate-500"
+                        placeholder="Seu nome completo"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="ui-label">Cargo *</label>
+                      <input
+                        required
+                        value={cargo}
+                        onChange={(e) => setCargo(e.target.value)}
+                        className="ui-input mt-1 text-slate-100 placeholder:text-slate-500"
+                        placeholder="Ex.: Eng. de Software"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="ui-label">Cidade</label>
+                      <input
+                        value={cidade}
+                        onChange={(e) => setCidade(e.target.value)}
+                        className="ui-input mt-1 text-slate-100 placeholder:text-slate-500"
+                        placeholder="Ex.: São Paulo"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="ui-label">Estado *</label>
+                      <select
+                        required
+                        value={estado}
+                        onChange={(e) => setEstado(e.target.value)}
+                        className="ui-input mt-1 text-slate-100"
+                      >
+                        <option value="">Selecione</option>
+                        {ESTADOS_BRASIL.map((uf) => (
+                          <option key={uf} value={uf}>
+                            {uf}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label className="ui-label">Área</label>
+                      <input
+                        value={area}
+                        onChange={(e) => setArea(e.target.value)}
+                        className="ui-input mt-1 text-slate-100 placeholder:text-slate-500"
+                        placeholder="Ex.: Desenvolvimento, Dados, Design..."
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label className="ui-label">Resumo</label>
+                      <textarea
+                        rows={3}
+                        value={resumo}
+                        onChange={(e) => setResumo(e.target.value)}
+                        className="ui-input mt-1 text-slate-100 placeholder:text-slate-500"
+                        placeholder="Conte rapidamente sua experiência, foco e principais resultados."
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label className="ui-label">URL da foto</label>
+                      <input
+                        value={foto}
+                        onChange={(e) => setFoto(e.target.value)}
+                        className="ui-input mt-1 text-slate-100 placeholder:text-slate-500"
+                        placeholder="https://sua-foto.com/perfil.jpg"
+                      />
+                      <p className="ui-hint">
+                        Use uma foto quadrada (1:1). Se quiser, pode colar a URL
+                        da sua foto do LinkedIn / GitHub.
+                      </p>
+                    </div>
+                  </div>
+                </StepPanel>
+
+                {/* Passo 3 - Habilidades */}
+                <StepPanel badge="Passo 3" title="Habilidades">
+                  <Tags
+                    label="Habilidades técnicas"
+                    items={habilidadesTecnicas}
+                    setItems={setHabilidadesTecnicas}
+                    placeholder="Ex.: React, Docker, SQL"
+                  />
+                  <Tags
+                    label="Soft skills"
+                    items={softSkills}
+                    setItems={setSoftSkills}
+                    placeholder="Ex.: Comunicação, Liderança"
+                  />
+                </StepPanel>
+
+                {/* Passo 4 - Experiências / Formação / Projetos */}
+                <StepPanel badge="Passo 4" title="Experiência e formação">
+                  <ObjList
+                    label="Experiências"
+                    items={experiencias}
+                    setItems={setExperiencias}
+                    schema={{
+                      empresa: "",
+                      cargo: "",
+                      inicio: "",
+                      fim: "",
+                      descricao: "",
+                    }}
+                    hint="Preencha empresa, cargo, período e uma breve descrição."
+                  />
+                  <ObjList
+                    label="Formação"
+                    items={formacao}
+                    setItems={setFormacao}
+                    schema={{ curso: "", instituicao: "", ano: "" }}
+                  />
+                  <ObjList
+                    label="Projetos"
+                    items={projetos}
+                    setItems={setProjetos}
+                    schema={{ titulo: "", link: "", descricao: "" }}
+                  />
+                </StepPanel>
+
+                {/* Passo 5 - Extras */}
+                <StepPanel badge="Passo 5" title="Extras do perfil">
+                  <Tags
+                    label="Certificações"
+                    items={certificacoes}
+                    setItems={setCertificacoes}
+                    placeholder="Ex.: AZ-900, AWS CCP"
+                  />
+                  <ObjList
+                    label="Idiomas"
+                    items={idiomas}
+                    setItems={setIdiomas}
+                    schema={{ idioma: "", nivel: "" }}
+                  />
+                  <Tags
+                    label="Áreas de interesse"
+                    items={areasInteresse}
+                    setItems={setAreasInteresse}
+                    placeholder="Ex.: Sustentabilidade, Esportes"
+                  />
+                </StepPanel>
+
+                {/* Passo 6 - Redes sociais (opcional) */}
+                <StepPanel badge="Opcional" title="Redes e links">
+                  <p className="ui-hint mb-2">
+                    Preencha se quiser deixar seus contatos à vista nos detalhes
+                    do perfil.
+                  </p>
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="ui-label">LinkedIn</label>
+                      <input
+                        value={linkedin}
+                        onChange={(e) => setLinkedin(e.target.value)}
+                        className="ui-input mt-1 text-slate-100 placeholder:text-slate-500"
+                        placeholder="URL do LinkedIn"
+                      />
+                    </div>
+                    <div>
+                      <label className="ui-label">GitHub</label>
+                      <input
+                        value={github}
+                        onChange={(e) => setGithub(e.target.value)}
+                        className="ui-input mt-1 text-slate-100 placeholder:text-slate-500"
+                        placeholder="URL do GitHub"
+                      />
+                    </div>
+                    <div>
+                      <label className="ui-label">Portfólio</label>
+                      <input
+                        value={portfolio}
+                        onChange={(e) => setPortfolio(e.target.value)}
+                        className="ui-input mt-1 text-slate-100 placeholder:text-slate-500"
+                        placeholder="Site / Portfólio"
+                      />
+                    </div>
+                    <div>
+                      <label className="ui-label">Instagram</label>
+                      <input
+                        value={instagram}
+                        onChange={(e) => setInstagram(e.target.value)}
+                        className="ui-input mt-1 text-slate-100 placeholder:text-slate-500"
+                        placeholder="@seuusuario"
+                      />
+                    </div>
+                  </div>
+                </StepPanel>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="ui-btn-primary mt-1"
+                >
+                  {loading ? "Criando…" : "Criar conta e card"}
+                </button>
+                <p className="ui-hint">
+                  Seu card será adicionado automaticamente ao fim da lista.
+                </p>
+              </form>
+            )}
           </div>
         </div>
       </div>
