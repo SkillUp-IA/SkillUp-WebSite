@@ -1,257 +1,411 @@
 // src/components/Home.jsx
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
-import anime from 'animejs'
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import anime from "animejs";
 
-import Card from './Card.jsx'
-import Modal from './Modal.jsx'
-import AuthBar from './AuthBar.jsx'
-import { fetchProfiles, aiSuggest, API_URL } from '../lib/api.js'
+import Card from "./Card.jsx";
+import Modal from "./Modal.jsx";
+import AuthBar from "./AuthBar.jsx";
+import Brand from "./Brand.jsx";
+import { fetchProfiles, API_URL } from "../lib/api.js";
 
-export default function Home() {
-  const location = useLocation()
+/* ========= Constantes ========= */
+const ESTADOS_BRASIL = [
+  { sigla: "AC", nome: "Acre" },
+  { sigla: "AL", nome: "Alagoas" },
+  { sigla: "AP", nome: "Amapá" },
+  { sigla: "AM", nome: "Amazonas" },
+  { sigla: "BA", nome: "Bahia" },
+  { sigla: "CE", nome: "Ceará" },
+  { sigla: "DF", nome: "Distrito Federal" },
+  { sigla: "ES", nome: "Espírito Santo" },
+  { sigla: "GO", nome: "Goiás" },
+  { sigla: "MA", nome: "Maranhão" },
+  { sigla: "MT", nome: "Mato Grosso" },
+  { sigla: "MS", nome: "Mato Grosso do Sul" },
+  { sigla: "MG", nome: "Minas Gerais" },
+  { sigla: "PA", nome: "Pará" },
+  { sigla: "PB", nome: "Paraíba" },
+  { sigla: "PR", nome: "Paraná" },
+  { sigla: "PE", nome: "Pernambuco" },
+  { sigla: "PI", nome: "Piauí" },
+  { sigla: "RJ", nome: "Rio de Janeiro" },
+  { sigla: "RN", nome: "Rio Grande do Norte" },
+  { sigla: "RS", nome: "Rio Grande do Sul" },
+  { sigla: "RO", nome: "Rondônia" },
+  { sigla: "RR", nome: "Roraima" },
+  { sigla: "SC", nome: "Santa Catarina" },
+  { sigla: "SP", nome: "São Paulo" },
+  { sigla: "SE", nome: "Sergipe" },
+  { sigla: "TO", nome: "Tocantins" },
+];
 
-  const [data, setData] = useState([])
-  const [selected, setSelected] = useState(null)
-  const [open, setOpen] = useState(false)
+const RECO_STORAGE_KEY = "skillup_recomendados";
 
-  const [q, setQ] = useState('')
-  const [cidade, setCidade] = useState('Todas')
-  const [area, setArea] = useState('Todas')
-  const [tech, setTech] = useState('Todas')
+// helper pra pegar a UF a partir de "Cidade - SP" ou "SP"
+function getUF(localizacao) {
+  if (!localizacao) return "";
+  const parts = String(localizacao)
+    .split("-")
+    .map((p) => p.trim())
+    .filter(Boolean);
 
-  const [loading, setLoading] = useState(false)
-  const [suggesting, setSuggesting] = useState(false)
-  const [errMsg, setErrMsg] = useState('')
-
-  const gridRef = useRef(null)
-
-  // ========= TEMA (persistência + sync com <html>) =========
-  const getInitialTheme = () => {
-    if (typeof window === 'undefined') return 'light'
-    const saved = localStorage.getItem('theme')
-    if (saved === 'dark' || saved === 'light') return saved
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  if (parts.length >= 2) {
+    const last = parts[parts.length - 1];
+    if (last.length === 2) return last.toUpperCase();
   }
 
-  const [theme, setTheme] = useState(getInitialTheme)
+  if (parts[0] && parts[0].length === 2) {
+    return parts[0].toUpperCase();
+  }
+
+  return "";
+}
+
+export default function Home() {
+  const location = useLocation();
+
+  const [data, setData] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [open, setOpen] = useState(false);
+
+  const [q, setQ] = useState("");
+  const [estado, setEstado] = useState("Todos");
+  const [area, setArea] = useState("Todos");
+  const [tech, setTech] = useState("Todos");
+
+  const [loading, setLoading] = useState(false);
+  const [errMsg, setErrMsg] = useState("");
+
+  const [recommendedOnly, setRecommendedOnly] = useState(false);
+  const [recommendedIds, setRecommendedIds] = useState([]);
+
+  const gridRef = useRef(null);
+
+  // ========= TEMA =========
+  const getInitialTheme = () => {
+    if (typeof window === "undefined") return "light";
+    const saved = localStorage.getItem("theme");
+    if (saved === "dark" || saved === "light") return saved;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
+  };
+
+  const [theme, setTheme] = useState(getInitialTheme);
 
   useEffect(() => {
-    const root = document.documentElement
-    if (theme === 'dark') root.classList.add('dark')
-    else root.classList.remove('dark')
-    localStorage.setItem('theme', theme)
-  }, [theme])
+    const root = document.documentElement;
+    if (theme === "dark") root.classList.add("dark");
+    else root.classList.remove("dark");
+    localStorage.setItem("theme", theme);
+  }, [theme]);
 
-  const toggleTheme = () => setTheme(t => (t === 'dark' ? 'light' : 'dark'))
+  const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
 
-  // Carrega dados (API -> /data/profiles.json -> /profiles.json)
+  // Carrega dados
   useEffect(() => {
-    ;(async () => {
-      setErrMsg('')
-      setLoading(true)
+    (async () => {
+      setErrMsg("");
+      setLoading(true);
       try {
-        const res = await fetchProfiles({ pageSize: 500 })
-        const list = Array.isArray(res) ? res : res.items ?? []
-        if (!list.length) throw new Error('API vazia')
-        setData(list)
+        const res = await fetchProfiles({ pageSize: 500 });
+        const list = Array.isArray(res) ? res : res.items ?? [];
+        if (!list.length) throw new Error("API vazia");
+        setData(list);
       } catch {
         try {
-          const r = await fetch(`${API_URL}/data/profiles.json`, { cache: 'no-store' })
-          const local = await r.json()
-          setData(local)
+          const r = await fetch(`${API_URL}/data/profiles.json`, {
+            cache: "no-store",
+          });
+          const local = await r.json();
+          setData(local);
         } catch {
           try {
-            const r2 = await fetch('/profiles.json', { cache: 'no-store' })
-            const local2 = await r2.json()
-            setData(local2)
+            const r2 = await fetch("/profiles.json", { cache: "no-store" });
+            const local2 = await r2.json();
+            setData(local2);
           } catch {
             setErrMsg(
-              'Não foi possível carregar os perfis. Inicie o backend (http://localhost:3000) ou coloque profiles.json em /public.'
-            )
+              "Não foi possível carregar os perfis. Inicie o backend (http://localhost:3000) ou coloque profiles.json em /public."
+            );
           }
         }
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    })()
-  }, [location.search])
+    })();
+  }, [location.search]);
+
+  // Lê recomendações do localStorage
+  function loadRecommendedFromStorage() {
+    try {
+      const raw = localStorage.getItem(RECO_STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      const list = Array.isArray(parsed) ? parsed : [];
+      setRecommendedIds(list);
+      return list;
+    } catch (e) {
+      console.error("Erro ao carregar recomendações locais", e);
+      setRecommendedIds([]);
+      return [];
+    }
+  }
+
+  // Carrega uma vez ao montar
+  useEffect(() => {
+    loadRecommendedFromStorage();
+  }, []);
 
   // Animações
   useEffect(() => {
     anime({
-      targets: '#topbar',
+      targets: "#topbar",
       opacity: [0, 1],
       translateY: [-10, 0],
       duration: 500,
-      easing: 'easeOutQuad'
-    })
-  }, [])
+      easing: "easeOutQuad",
+    });
+  }, []);
 
   useEffect(() => {
-    if (!gridRef.current) return
+    if (!gridRef.current) return;
     anime({
-      targets: '#cards-grid > *',
+      targets: "#cards-grid > *",
       opacity: [0, 1],
       translateY: [12, 0],
       duration: 450,
       delay: anime.stagger(45),
-      easing: 'easeOutQuad'
-    })
-  }, [data, q, cidade, area, tech])
+      easing: "easeOutQuad",
+    });
+  }, [data, q, estado, area, tech, recommendedOnly, recommendedIds]);
 
   // Listas de filtros
-  const cidades = useMemo(() => ['Todas', ...new Set(data.map(p => p.localizacao))], [data])
-  const areas = useMemo(() => ['Todas', ...new Set(data.map(p => p.area))], [data])
+  const areas = useMemo(
+    () => ["Todos", ...new Set(data.map((p) => p.area).filter(Boolean))],
+    [data]
+  );
+
   const techs = useMemo(() => {
-    const all = data.flatMap(p => p.habilidadesTecnicas || [])
-    return ['Todas', ...new Set(all)]
-  }, [data])
+    const all = data.flatMap((p) => p.habilidadesTecnicas || []);
+    return ["Todos", ...new Set(all)];
+  }, [data]);
 
   // Busca + filtros
   const filtrados = useMemo(() => {
-    const s = q.trim().toLowerCase()
-    return data.filter(p => {
+    const s = q.trim().toLowerCase();
+
+    let result = data.filter((p) => {
       const matchBusca =
         !s ||
         p.nome?.toLowerCase().includes(s) ||
         p.cargo?.toLowerCase().includes(s) ||
-        (p.habilidadesTecnicas || []).some(t => t.toLowerCase().includes(s))
+        (p.habilidadesTecnicas || []).some((t) =>
+          t.toLowerCase().includes(s)
+        );
 
-      const matchCidade = cidade === 'Todas' || p.localizacao === cidade
-      const matchArea = area === 'Todas' || p.area === area
-      const matchTech = tech === 'Todas' || (p.habilidadesTecnicas || []).includes(tech)
+      const uf = getUF(p.localizacao);
+      const matchEstado = estado === "Todos" || uf === estado;
 
-      return matchBusca && matchCidade && matchArea && matchTech
-    })
-  }, [data, q, cidade, area, tech])
+      const matchArea = area === "Todos" || p.area === area;
+      const matchTech =
+        tech === "Todos" || (p.habilidadesTecnicas || []).includes(tech);
 
-  // IA: sugestões simples com base no filtro atual
-  async function handleSuggest() {
-    try {
-      setSuggesting(true)
-      const skills = tech !== 'Todas' ? [tech] : q ? [q] : []
-      if (!skills.length) return alert('Selecione uma tecnologia ou digite algo na busca.')
-      const res = await aiSuggest({
-        skills,
-        area: area === 'Todas' ? '' : area,
-        city: cidade === 'Todas' ? '' : cidade,
-        k: 6
-      })
-      if (res?.items?.length) setData(res.items)
-      else alert('Sem sugestões para esses parâmetros.')
-    } catch (e) {
-      console.error(e)
-      alert('Erro ao obter sugestões da IA.')
-    } finally {
-      setSuggesting(false)
+      return matchBusca && matchEstado && matchArea && matchTech;
+    });
+
+    if (recommendedOnly && recommendedIds.length) {
+      const setIds = new Set(recommendedIds);
+      result = result.filter((p) => setIds.has(p.id));
     }
+
+    return result;
+  }, [data, q, estado, area, tech, recommendedOnly, recommendedIds]);
+
+  // Botão "Sugestões da IA" -> mostra/oculta apenas recomendados
+  function handleToggleRecommended() {
+    const list = loadRecommendedFromStorage();
+
+    if (!list.length) {
+      alert(
+        "Você ainda não recomendou nenhum profissional.\nAbra um card, clique em 'Recomendar profissional' e depois volte aqui."
+      );
+      setRecommendedOnly(false);
+      return;
+    }
+
+    setRecommendedOnly((prev) => !prev);
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-slate-950 to-sky-950 text-slate-50">
+      {/* TOPBAR / NAV */}
       <header
         id="topbar"
-        className="sticky top-0 z-40 bg-white/70 dark:bg-zinc-900/70 backdrop-blur border-b border-zinc-200 dark:border-zinc-800"
+        className="sticky top-0 z-40 border-b border-slate-800 bg-slate-950/80 backdrop-blur"
       >
-        <div className="max-w-6xl mx-auto px-4 py-3 flex flex-wrap gap-3 items-center">
-          {/* ── LOGO + título ───────────────────────────────────────────── */}
-          <div className="flex items-center gap-2 flex-1">
-            {/* tenta /public/skillup-logo.png; se não existir (Vite), faz fallback pra /skillup-logo.png */}
-            <img
-              src="/public/skillup-logo.png"
-              onError={(e) => {
-                e.currentTarget.onerror = null
-                e.currentTarget.src = '/skillup-logo.png'
-              }}
-              alt="SkillUp IA"
-              className="h-8 w-8 select-none"
-            />
-            <span className="font-semibold text-lg">SkillUp IA</span>
+        {/* Linha 1: logo + ações */}
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <Brand size={34} />
+            <div className="hidden sm:flex flex-col text-xs text-slate-400">
+              <span>Plataforma de talentos com IA</span>
+              <span>
+                Conecte profissionais, oportunidades e aprendizado contínuo.
+              </span>
+            </div>
           </div>
 
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Buscar por nome, cargo ou tecnologia..."
-            className="px-3 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-sm outline-none"
-          />
+          <div className="ml-auto flex items-center gap-2 sm:gap-3">
+            <button
+              onClick={toggleTheme}
+              className="px-3 py-2 rounded-xl bg-slate-900/80 text-xs sm:text-sm text-slate-200 border border-slate-700 hover:bg-slate-800 transition"
+            >
+              Tema {theme === "dark" ? "🌙" : "🌞"}
+            </button>
 
-          <select
-            value={cidade}
-            onChange={(e) => setCidade(e.target.value)}
-            className="px-2 py-2 text-sm rounded-xl bg-zinc-100 dark:bg-zinc-800"
-          >
-            {cidades.map((c) => (
-              <option key={c}>{c}</option>
-            ))}
-          </select>
+            <Link
+              to="/auth"
+              className="px-3 py-2 rounded-xl bg-sky-500 text-xs sm:text-sm font-medium text-slate-950 hover:bg-sky-400 transition shadow-lg shadow-sky-500/30"
+            >
+              Criar perfil
+            </Link>
 
-          <select
-            value={area}
-            onChange={(e) => setArea(e.target.value)}
-            className="px-2 py-2 text-sm rounded-xl bg-zinc-100 dark:bg-zinc-800"
-          >
-            {areas.map((a) => (
-              <option key={a}>{a}</option>
-            ))}
-          </select>
+            <AuthBar />
+          </div>
+        </div>
 
-          <select
-            value={tech}
-            onChange={(e) => setTech(e.target.value)}
-            className="px-2 py-2 text-sm rounded-xl bg-zinc-100 dark:bg-zinc-800"
-          >
-            {techs.map((t) => (
-              <option key={t}>{t}</option>
-            ))}
-          </select>
+        {/* Linha 2: texto + filtros organizados */}
+        <div className="max-w-6xl mx-auto px-4 pb-4 space-y-2">
+          <p className="text-[11px] sm:text-xs text-slate-400">
+            Use a busca e os filtros para encontrar o perfil ideal por nome,
+            estado, área ou tecnologia.
+          </p>
 
-          <button
-            onClick={toggleTheme}
-            className="px-3 py-2 rounded-xl bg-zinc-200 dark:bg-zinc-800 text-sm transition hover:opacity-80"
-          >
-            Alternar tema {theme === 'dark' ? '🌙' : '🌞'}
-          </button>
+          {/* Grid de filtros */}
+          <div className="grid gap-2 sm:gap-3 md:grid-cols-12 items-center">
+            {/* Busca: ocupa mais colunas em telas maiores */}
+            <div className="md:col-span-5 lg:col-span-6">
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Buscar por nome, cargo ou tecnologia..."
+                className="w-full px-3 py-2 rounded-xl bg-slate-900/80 border border-slate-700 text-xs sm:text-sm outline-none placeholder:text-slate-500"
+              />
+            </div>
 
-          <button
-            onClick={handleSuggest}
-            disabled={suggesting}
-            className="px-3 py-2 rounded-xl bg-blue-600 text-white text-sm hover:opacity-90 disabled:opacity-60"
-          >
-            {suggesting ? 'Gerando…' : 'Sugestões da IA'}
-          </button>
+            {/* Estado */}
+            <div className="md:col-span-3 lg:col-span-2">
+              <select
+                value={estado}
+                onChange={(e) => setEstado(e.target.value)}
+                className="w-full px-2 py-2 text-xs sm:text-sm rounded-xl bg-slate-900/80 border border-slate-700"
+              >
+                <option value="Todos">Todos os estados</option>
+                {ESTADOS_BRASIL.map((uf) => (
+                  <option key={uf.sigla} value={uf.sigla}>
+                    {uf.sigla} - {uf.nome}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          <Link to="/auth" className="px-3 py-2 rounded-xl bg-emerald-600 text-white text-sm hover:opacity-90">
-            Criar Perfil
-          </Link>
+            {/* Área */}
+            <div className="md:col-span-2 lg:col-span-2">
+              <select
+                value={area}
+                onChange={(e) => setArea(e.target.value)}
+                className="w-full px-2 py-2 text-xs sm:text-sm rounded-xl bg-slate-900/80 border border-slate-700"
+              >
+                {areas.map((a) => (
+                  <option key={a}>{a}</option>
+                ))}
+              </select>
+            </div>
 
-          <AuthBar />
+            {/* Tech */}
+            <div className="md:col-span-2 lg:col-span-2">
+              <select
+                value={tech}
+                onChange={(e) => setTech(e.target.value)}
+                className="w-full px-2 py-2 text-xs sm:text-sm rounded-xl bg-slate-900/80 border border-slate-700"
+              >
+                {techs.map((t) => (
+                  <option key={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Botão Sugestões da IA */}
+            <div className="md:col-span-12 lg:col-span-2 flex md:justify-end">
+              <button
+                onClick={handleToggleRecommended}
+                className={`w-full lg:w-auto px-3 py-2 rounded-xl text-xs sm:text-sm font-medium transition ${
+                  recommendedOnly
+                    ? "bg-emerald-700 text-slate-50"
+                    : "bg-emerald-500 text-slate-950 hover:bg-emerald-400"
+                }`}
+              >
+                {recommendedOnly ? "Ver todos" : "Sugestões da IA"}
+              </button>
+            </div>
+          </div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-6">
+      {/* CONTEÚDO */}
+      <main className="max-w-6xl mx-auto px-4 py-8">
         {loading && (
-          <p className="text-center text-zinc-500 dark:text-zinc-400">Carregando…</p>
+          <p className="text-center text-slate-300">Carregando perfis…</p>
         )}
 
-        {!loading && errMsg && <p className="text-center text-red-600">{errMsg}</p>}
+        {!loading && errMsg && (
+          <p className="text-center text-red-400">{errMsg}</p>
+        )}
 
         {!loading && !errMsg && (
           <>
-            {filtrados.length === 0 ? (
-              <p className="text-center text-zinc-500 dark:text-zinc-400">
-                Nenhum profissional encontrado.
+            <div className="mb-5 flex items-baseline justify-between gap-2">
+              <h1 className="text-xl sm:text-2xl font-semibold text-slate-50">
+                Profissionais em destaque
+              </h1>
+              <p className="text-xs text-slate-400">
+                {filtrados.length} perfil
+                {filtrados.length === 1 ? "" : "s"} encontrado
+                {filtrados.length === 1 ? "" : "s"}.
               </p>
+            </div>
+
+            {filtrados.length === 0 ? (
+              <div className="text-center text-slate-300 space-y-2">
+                <p>Nenhum profissional encontrado para esses filtros.</p>
+                <p className="text-xs text-slate-500">
+                  Tente remover algum filtro ou buscar por outra tecnologia.
+                </p>
+                <p className="text-xs text-slate-500">
+                  Você também pode{" "}
+                  <Link
+                    to="/auth"
+                    className="text-sky-400 hover:underline font-medium"
+                  >
+                    criar seu perfil
+                  </Link>{" "}
+                  e ser o primeiro dessa região 😉
+                </p>
+              </div>
             ) : (
-              <div id="cards-grid" ref={gridRef} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div
+                id="cards-grid"
+                ref={gridRef}
+                className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+              >
                 {filtrados.map((p) => (
                   <Card
                     key={p.id}
                     profile={p}
                     onOpen={(prof) => {
-                      setSelected(prof)
-                      setOpen(true)
+                      setSelected(prof);
+                      setOpen(true);
                     }}
                   />
                 ))}
@@ -263,5 +417,5 @@ export default function Home() {
 
       <Modal open={open} data={selected} onClose={() => setOpen(false)} />
     </div>
-  )
+  );
 }

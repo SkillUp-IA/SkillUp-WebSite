@@ -171,6 +171,11 @@ export default function AuthPage() {
   const [cargo, setCargo] = useState("");
   const [resumo, setResumo] = useState("");
 
+  // Redes (opcionais)
+  const [linkedin, setLinkedin] = useState("");
+  const [github, setGithub] = useState("");
+  const [portfolio, setPortfolio] = useState("");
+
   // Localização e área
   const [localizacao, setLocalizacao] = useState("");
   const [estado, setEstado] = useState("");
@@ -208,9 +213,9 @@ export default function AuthPage() {
     if (rPass !== confirm) return alert("Senhas diferentes.");
     if (!nome || !cargo) return alert("Informe pelo menos Nome e Cargo.");
 
-    // Garantir localizacao montada no submit
     const locFinal =
       cidade && estado ? `${cidade} - ${estado}` : localizacao || cidade || estado;
+
     const profile = {
       nome,
       foto,
@@ -226,6 +231,11 @@ export default function AuthPage() {
       certificacoes,
       idiomas,
       areasInteresse,
+      links: {
+        linkedin,
+        github,
+        portfolio,
+      },
     };
 
     try {
@@ -254,49 +264,58 @@ export default function AuthPage() {
       {/* conteúdo */}
       <div className="relative z-10 flex items-center justify-center px-4 py-10 lg:py-16">
         <div className="w-full max-w-6xl flex flex-col lg:flex-row items-center lg:items-stretch gap-10 lg:gap-16">
-          {/* Lado esquerdo - texto da marca */}
+          {/* Lado esquerdo - hero da marca */}
           <div className="flex-1 w-full text-center lg:text-left flex items-center justify-center">
             <div className="space-y-6 max-w-xl">
-              <div className="flex items-center justify-center lg:justify-start gap-3">
-                <div className="h-11 w-11 rounded-2xl bg-slate-900/80 flex items-center justify-center shadow-lg shadow-sky-500/30">
+              {/* Logo + nome bem grandes */}
+              <div className="flex items-center justify-center lg:justify-start gap-4">
+                <div className="h-16 w-16 rounded-3xl bg-slate-900/90 flex items-center justify-center shadow-[0_0_35px_rgba(56,189,248,0.55)] border border-sky-500/40">
                   <img
                     src="/skillup-logo.png"
                     alt="SkillUp IA"
-                    className="h-7 w-7 object-contain"
+                    className="h-11 w-11 object-contain"
                   />
                 </div>
-                <Brand size={28} />
+                <div className="flex flex-col">
+                  <span className="text-3xl sm:text-4xl font-semibold tracking-tight text-slate-50">
+                    <span className="text-sky-400">Skill</span>
+                    <span className="text-slate-50">Up</span>{" "}
+                    <span className="text-slate-300">IA</span>
+                  </span>
+                  <span className="text-xs sm:text-sm text-slate-400 mt-1">
+                    Conectando talentos, IA e oportunidades.
+                  </span>
+                </div>
               </div>
 
+              {/* Headline principal */}
               <h1 className="text-3xl sm:text-4xl xl:text-5xl font-semibold leading-tight text-slate-50">
                 Conecte talentos.{" "}
                 <span className="text-sky-400">Potencialize times.</span>
               </h1>
 
+              {/* Subtexto que você gostou */}
               <p className="text-sm sm:text-base text-slate-200/80 max-w-md mx-auto lg:mx-0">
                 Encontre profissionais por habilidades, área e localização —
                 rápido, inteligente e com o toque da IA.
               </p>
 
-              <div className="grid grid-cols-3 gap-3 max-w-md mx-auto lg:mx-0 text-sm">
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-3 text-left">
-                  <p className="text-[11px] uppercase tracking-wide text-slate-400">
-                    Perfis ativos
-                  </p>
-                  <p className="text-lg font-semibold text-slate-50">+3k</p>
-                </div>
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-3 text-left">
-                  <p className="text-[11px] uppercase tracking-wide text-slate-400">
-                    Empresas conectadas
-                  </p>
-                  <p className="text-lg font-semibold text-slate-50">+120</p>
-                </div>
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-3 text-left">
-                  <p className="text-[11px] uppercase tracking-wide text-slate-400">
-                    Match assertivo
-                  </p>
-                  <p className="text-lg font-semibold text-slate-50">92%</p>
-                </div>
+              {/* Bloco com o texto da SkillUp IA */}
+              <div className="mt-4 max-w-xl mx-auto lg:mx-0 text-sm sm:text-base text-slate-200/90 leading-relaxed bg-slate-950/50 border border-slate-800/80 rounded-2xl p-4 sm:p-5 shadow-[0_18px_45px_rgba(15,23,42,0.9)]">
+                <p>
+                  <strong>SkillUp IA</strong> é uma plataforma que conecta
+                  pessoas e oportunidades. Nela, os profissionais criam seus
+                  perfis com currículo, habilidades e experiências, formando uma
+                  grande rede onde empresas podem encontrar talentos de forma
+                  rápida e assertiva.
+                </p>
+                <p className="mt-3">
+                  Além disso, a SkillUp IA monta trilhas de aprendizado
+                  personalizadas, mostrando quais cursos e conteúdos a pessoa
+                  precisa estudar para chegar no cargo que deseja. Assim, o
+                  usuário acompanha sua evolução, melhora o currículo e aumenta
+                  suas chances de empregabilidade.
+                </p>
               </div>
             </div>
           </div>
@@ -306,6 +325,7 @@ export default function AuthPage() {
             <div className="ui-card rounded-3xl bg-slate-950/90 border border-slate-800 shadow-[0_18px_55px_rgba(15,23,42,0.95)] backdrop-blur">
               {/* Header do card */}
               <div className="px-7 pt-6 flex items-center justify-between gap-4">
+                {/* Brand menor só no mobile */}
                 <div className="flex items-center gap-2 lg:hidden">
                   <div className="h-9 w-9 rounded-2xl bg-slate-900/80 flex items-center justify-center">
                     <img
@@ -568,6 +588,7 @@ export default function AuthPage() {
                             placeholder="Conte rapidamente sua experiência e foco."
                           />
                         </div>
+
                         <div className="sm:col-span-2">
                           <label className="ui-label text-slate-200">
                             URL da foto
@@ -581,6 +602,52 @@ export default function AuthPage() {
                           <p className="ui-hint text-slate-400 mt-1">
                             Dica: use uma foto quadrada (1:1) para melhor
                             recorte.
+                          </p>
+                        </div>
+
+                        {/* Redes (opcional) */}
+                        <div className="sm:col-span-2 mt-2">
+                          <label className="ui-label text-slate-200">
+                            Redes (opcional)
+                          </label>
+                          <div className="grid sm:grid-cols-3 gap-3 mt-1">
+                            <div>
+                              <span className="text-[11px] text-slate-400">
+                                LinkedIn
+                              </span>
+                              <input
+                                value={linkedin}
+                                onChange={(e) => setLinkedin(e.target.value)}
+                                className="ui-input mt-1 bg-slate-900/80 border-slate-700 text-xs"
+                                placeholder="https://linkedin.com/in/..."
+                              />
+                            </div>
+                            <div>
+                              <span className="text-[11px] text-slate-400">
+                                GitHub
+                              </span>
+                              <input
+                                value={github}
+                                onChange={(e) => setGithub(e.target.value)}
+                                className="ui-input mt-1 bg-slate-900/80 border-slate-700 text-xs"
+                                placeholder="https://github.com/..."
+                              />
+                            </div>
+                            <div>
+                              <span className="text-[11px] text-slate-400">
+                                Portfólio / Site
+                              </span>
+                              <input
+                                value={portfolio}
+                                onChange={(e) => setPortfolio(e.target.value)}
+                                className="ui-input mt-1 bg-slate-900/80 border-slate-700 text-xs"
+                                placeholder="https://seu-site.com"
+                              />
+                            </div>
+                          </div>
+                          <p className="ui-hint text-slate-400 mt-1">
+                            Preencha apenas as redes que você quiser deixar
+                            públicas.
                           </p>
                         </div>
                       </div>

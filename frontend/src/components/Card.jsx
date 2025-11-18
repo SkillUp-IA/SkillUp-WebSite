@@ -1,4 +1,27 @@
 // src/components/Card.jsx
+
+// helper para extrair a UF da localização ("Cidade - SP" -> "SP")
+function getUF(localizacao) {
+  if (!localizacao) return "";
+  const parts = String(localizacao)
+    .split("-")
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  // Se veio "Cidade - SP" ou "Cidade - Alguma Coisa - SP"
+  if (parts.length >= 2) {
+    const last = parts[parts.length - 1];
+    if (last.length === 2) return last.toUpperCase();
+  }
+
+  // Se veio só "SP"
+  if (parts[0] && parts[0].length === 2) {
+    return parts[0].toUpperCase();
+  }
+
+  return "";
+}
+
 export default function Card({ profile, onOpen }) {
   const {
     nome = "Nome não informado",
@@ -8,6 +31,7 @@ export default function Card({ profile, onOpen }) {
     resumo,
     habilidadesTecnicas = [],
     foto,
+    links = {},
   } = profile || {};
 
   // Monta a linha de localização/área de forma segura
@@ -15,7 +39,12 @@ export default function Card({ profile, onOpen }) {
   if (localizacao) locationParts.push(localizacao);
   if (area) locationParts.push(area);
   const locationLine =
-    locationParts.join(" • ") || "Localização e área não informadas";
+    locationParts.length > 0
+      ? locationParts.join(" • ")
+      : "Localização não informada";
+
+  // UF para badge
+  const uf = getUF(localizacao);
 
   // Avatar: se não tiver foto válida, mostra iniciais
   const hasFoto = !!foto;
@@ -27,6 +56,11 @@ export default function Card({ profile, onOpen }) {
       .slice(0, 2)
       .map((p) => p[0]?.toUpperCase())
       .join("");
+
+  // Verifica se o perfil tem alguma rede cadastrada
+  const hasAnyLink =
+    !!links &&
+    Boolean(links.linkedin || links.github || links.portfolio || links.site);
 
   return (
     <button
@@ -75,9 +109,11 @@ export default function Card({ profile, onOpen }) {
           <p className="text-sm text-slate-600 dark:text-slate-300 truncate">
             {cargo}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-            {locationLine}
-          </p>
+
+          <div className="mt-1 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+            <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+            <span className="truncate">{locationLine}</span>
+          </div>
         </div>
       </div>
 
@@ -105,6 +141,29 @@ export default function Card({ profile, onOpen }) {
               {t}
             </span>
           ))}
+        </div>
+      )}
+
+      {hasAnyLink && (
+        <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
+          <span className="text-xs">👤</span>
+          <span>Redes disponíveis no perfil</span>
+        </p>
+      )}
+
+      {!!uf && (
+        <div className="mt-3 flex justify-end">
+          <span
+            className="
+              inline-flex items-center justify-center
+              px-2 py-1 text-[11px] font-medium
+              rounded-full
+              bg-slate-900/80 text-slate-100
+              border border-slate-600
+            "
+          >
+            {uf}
+          </span>
         </div>
       )}
     </button>
