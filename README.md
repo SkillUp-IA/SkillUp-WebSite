@@ -9,6 +9,7 @@ Permite criar um card profissional completo, usar filtros avançados para buscar
 > **VÍDEO DEMONSTRATIVO ABAIXO, POIS USAMOS A OPENAI API EM USO**
 
    - [Video](https://youtu.be/5ie5-eYgNeQ?si=cgOhkP7oHzOjh3FE)
+   - [Repositorio](https://github.com/SkillUp-IA/SkillUpWebSite)
 
 ---
 
